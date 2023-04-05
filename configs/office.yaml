@@ -1,33 +1,37 @@
 AutoPilot:
   Enabled:
-    Value: true
     MqttCmdTopics:
       Command: air3/office/autopilot/enabled/command
       State: air3/office/autopilot/enabled/state
   Temperature:
-    Value: 19
     MqttCmdTopics:
       Command: air3/office/autopilot/temperature/command
       State: air3/office/autopilot/temperature/state
-Mode:
-  Value: heat
-  MqttCmdTopics:
-    Command: air3/office/mode/command
-    State: air3/office/mode/state
-Fan:
-  Value: 1
-  MqttCmdTopics:
-    Command: air3/office/fanspeed/command
-    State: air3/office/fanspeed/state
-Device:
+Frontend:
   Temperature:
-    Command: esphome/hvac/office/temperature/command
-    State: esphome/hvac/office/temperature/state
+    MqttCmdTopics:
+      Command: air3/office/temperature/command
+      State: air3/office/temperature/state
   Mode:
-    Command: esphome/hvac/office/mode/command
-    State: esphome/hvac/office/mode/state
+    MqttCmdTopics:
+      Command: air3/office/mode/command
+      State: air3/office/mode/state
   Fan:
-    Command: esphome/hvac/office/fan/command
-    State: esphome/hvac/office/fan/state
+    MqttCmdTopics:
+      Command: air3/office/fanspeed/command
+      State: air3/office/fanspeed/state
+Backend:
+  Temperature:
+    MqttCmdTopics:
+      Command: esphome/hvac/office/temperature/command
+      State: esphome/hvac/office/temperature/state
+  Mode:
+    MqttCmdTopics:
+      Command: esphome/hvac/office/mode/command
+      State: esphome/hvac/office/mode/state
+  Fan:
+    MqttCmdTopics:
+      Command: esphome/hvac/office/fan/command
+      State: esphome/hvac/office/fan/state
 Sensor: 
   Topic: zigbee2mqtt/server/device/office/air
