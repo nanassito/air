@@ -28,6 +28,14 @@ func main() {
 				"zigbee2mqtt/server/device/office/followme",
 			),
 		),
+		*models.NewHvacWithDefaultTopics(
+			mqttClient,
+			"living",
+			mqtt.NewTemperatureSensor(
+				mqttClient,
+				"zigbee2mqtt/server/device/living/followme",
+			),
+		),
 	}
 	for range time.Tick(30 * time.Second) {
 		L.Info("Autopilot run.")
