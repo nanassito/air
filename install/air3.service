@@ -1,0 +1,15 @@
+[Unit]
+Description=air3
+After=network.target
+Requires=mosquitto.service
+
+[Service]
+ExecStart=/github/air/install/air3.bin \
+        -mqtt="127.0.0.1:1883"
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=dorian
+
+[Install]
+WantedBy=multi-user.target
