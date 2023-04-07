@@ -21,12 +21,12 @@ type autoPilot struct {
 }
 
 type Hvac struct {
-	Name           string
-	AutoPilot      *autoPilot
-	Mode           *mqtt.ThirdPartyValue[string]
-	Fan            *mqtt.ThirdPartyValue[string]
-	Temperature    *mqtt.ThirdPartyValue[float64]
-	InternalOffset float64
+	Name          string
+	AutoPilot     *autoPilot
+	Mode          *mqtt.ThirdPartyValue[string]
+	Fan           *mqtt.ThirdPartyValue[string]
+	Temperature   *mqtt.ThirdPartyValue[float64]
+	DecisionScore float64
 }
 
 var (
@@ -126,7 +126,27 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 				return strconv.FormatFloat(value, 'f', 1, 64)
 			},
 		),
-		InternalOffset: 0,
+		DecisionScore: 0,
 	}
 	return &hvac
+}
+
+func DecreaseFanSpeed(hvac *Hvac) {
+	switch hvac.Fan.Get() {
+	case "MEDIUM":
+		hvac.Fan.Set("LOW")
+	case "HIGH":
+		hvac.Fan.Set("MEDIUM")
+	}
+}
+
+func IncreaseFanSpeed(hvac *Hvac) {
+	switch hvac.Fan.Get() {
+	case "AUTO":
+		hvac.Fan.Set("MEDIUM")
+	case "LOW":
+		hvac.Fan.Set("MEDIUM")
+	case "MEDIUM":
+		hvac.Fan.Set("HIGH")
+	}
 }

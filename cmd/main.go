@@ -29,9 +29,18 @@ func main() {
 			),
 		),
 	}
-	for range time.Tick(5 * time.Minute) {
+	for range time.Tick(30 * time.Second) {
 		L.Info("Autopilot run.")
 		for _, hvac := range hvacs {
+			L.Info("hvac state",
+				"name", hvac.Name,
+				"autopilot.enabled", hvac.AutoPilot.Enabled.Get(),
+				"autopilot.minTemp", hvac.AutoPilot.MinTemp.Get(),
+				"Mode", hvac.Mode.Get(),
+				"Fan", hvac.Fan.Get(),
+				"Temperature", hvac.Temperature.Get(),
+				"decisionScore", hvac.DecisionScore,
+			)
 			if hvac.AutoPilot.Enabled.Get() {
 				L.Info("Autopilot is enabled on this hvac", "hvac", hvac.Name)
 				logic.TuneHeat(&hvac)
