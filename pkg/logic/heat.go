@@ -29,7 +29,7 @@ func TuneHeat(hvac *models.Hvac) {
 	}
 
 	if hvac.Mode.Get() == "OFF" && current <= hvac.AutoPilot.MinTemp.Get()+1 {
-		// Temperature lowered enough that we should restart the heating cycle
+		L.Info("Temperature lowered enough that we should restart the heating cycle.", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
 		hvac.Mode.Set("HEAT")
 		hvac.Fan.Set("AUTO")
@@ -37,36 +37,33 @@ func TuneHeat(hvac *models.Hvac) {
 		return
 	}
 
+	minOffset := 0.0
 	switch hvac.AutoPilot.Sensor.GetTrend() {
 	case mqtt.TrendStable:
 		L.Info("Trend is stable", "hvac", hvac.Name)
-		if current <= hvac.AutoPilot.MinTemp.Get() {
-			hvac.DecisionScore += 1
-		}
-		if current > hvac.AutoPilot.MinTemp.Get()+1 {
-			hvac.DecisionScore -= 1
-		}
+		minOffset = 0
 
 	case mqtt.TrendCoolingDown:
 		L.Info("Trend is cooling down", "hvac", hvac.Name)
-		if current <= hvac.AutoPilot.MinTemp.Get()+0.5 {
-			hvac.DecisionScore += 1
-		}
-		if current > hvac.AutoPilot.MinTemp.Get()+1+0.5 {
-			hvac.DecisionScore -= 1
-		}
+		minOffset = 0.5
 
 	case mqtt.TrendWarmingUp:
 		L.Info("Trend is warming up", "hvac", hvac.Name)
-		if current <= hvac.AutoPilot.MinTemp.Get()-0.5 {
-			hvac.DecisionScore += 1
-		}
-		if current > hvac.AutoPilot.MinTemp.Get()+1-0.5 {
-			hvac.DecisionScore -= 1
-		}
+		minOffset = -0.5
 
 	default:
 		L.Warn("Unknown trend", "trend", hvac.AutoPilot.Sensor.GetTrend(), "hvac", hvac.Name)
+		minOffset = 0
+	}
+
+	if current <= hvac.AutoPilot.MinTemp.Get()+minOffset {
+		hvac.DecisionScore += 1
+		L.Info("Need more heat", "hvac", hvac.Name)
+	} else if current > hvac.AutoPilot.MinTemp.Get()+1+minOffset {
+		hvac.DecisionScore -= 1
+		L.Info("Need less heat", "hvac", hvac.Name)
+	} else {
+		L.Info("Not doing anything", "hvac", hvac.Name)
 	}
 
 	switch hvac.DecisionScore {

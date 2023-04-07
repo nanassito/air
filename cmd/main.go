@@ -41,7 +41,7 @@ func main() {
 		L.Info("Autopilot run.")
 		for _, hvac := range hvacs {
 			L.Info("hvac state",
-				"name", hvac.Name,
+				"hvac", hvac.Name,
 				"autopilot.enabled", hvac.AutoPilot.Enabled.Get(),
 				"autopilot.minTemp", hvac.AutoPilot.MinTemp.Get(),
 				"Mode", hvac.Mode.Get(),
