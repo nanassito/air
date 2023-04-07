@@ -53,21 +53,10 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 				"air3/"+name+"/autopilot/enabled/command",
 				"air3/"+name+"/autopilot/enabled/state",
 				func(payload []byte) (bool, error) {
-					value, ok := map[string]bool{
-						"ON":  true,
-						"OFF": false,
-					}[strings.ToUpper(string(payload))]
-					if ok {
-						return value, nil
-					} else {
-						return *new(bool), ErrBadPayload
-					}
+					return strconv.ParseBool(string(payload))
 				},
 				func(value bool) string {
-					return map[bool]string{
-						true:  "on",
-						false: "off",
-					}[value]
+					return strconv.FormatBool(value)
 				},
 			),
 			MinTemp: mqtt.NewControlledValue(
