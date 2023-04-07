@@ -14,14 +14,14 @@ var L = utils.Logger
 func MustNewMqttClient(server string) paho.Client {
 	hostname, err := os.Hostname()
 	if err != nil {
-		L.Error("Can't figure out the hostname", err)
+		L.Error("Can't figure out the hostname", "err", err)
 		panic(err)
 	}
 	opts := paho.NewClientOptions()
 	opts.SetClientID(fmt.Sprintf("air3-%s", hostname))
 	opts.AddBroker(server)
 	opts.OnConnectionLost = func(client paho.Client, err error) {
-		L.Error("Lost mqtt connection", err)
+		L.Error("Lost mqtt connection", "err", err)
 		panic(err)
 	}
 	client := paho.NewClient(opts)

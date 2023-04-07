@@ -1,8 +1,6 @@
 package logic
 
 import (
-	"errors"
-
 	"github.com/nanassito/air/pkg/models"
 	"github.com/nanassito/air/pkg/mqtt"
 	"github.com/nanassito/air/pkg/utils"
@@ -13,11 +11,11 @@ var L = utils.Logger
 func TuneHeat(hvac *models.Hvac) {
 	current, err := hvac.AutoPilot.Sensor.GetCurrent()
 	if err != nil {
-		L.Error("Don't have a current temperature from the sensor yet.", err, "hvac", hvac.Name)
+		L.Error("Don't have a current temperature from the sensor yet.", "hvac", hvac.Name)
 		return
 	}
 	if !hvac.AutoPilot.MinTemp.IsReady() {
-		L.Error("autopilot min temperature isn't initialized yet.", errors.New(""), "hvac", hvac.Name)
+		L.Error("autopilot min temperature isn't initialized yet.", "hvac", hvac.Name)
 		return
 	}
 

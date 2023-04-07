@@ -44,7 +44,7 @@ func (s *ThirdPartyValue[T]) Set(t T) {
 			L.Warn("ThirdPartyValue was not acknowledged", "desired", t, "acknowledged", s.value, "hvac")
 		}
 	}
-	L.Error("Failed to set a ThirdPartyValue", errors.New(""), "desired", t, "acknowledged", s.value, "hvac")
+	L.Error("Failed to set a ThirdPartyValue", "desired", t, "acknowledged", s.value, "hvac")
 }
 
 func NewThirdPartyValue[T bool | string | float64](mqtt paho.Client, commandTopic string, statusTopic string, parser func([]byte) (T, error), formatter func(T) string) *ThirdPartyValue[T] {
@@ -61,7 +61,7 @@ func NewThirdPartyValue[T bool | string | float64](mqtt paho.Client, commandTopi
 		L.Info("Received", "topic", m.Topic(), "payload", m.Payload())
 		value, err := s.parser(m.Payload())
 		if err != nil {
-			L.Error("Failed to parse mqtt message", err, "topic", m.Topic(), "payload", m.Payload())
+			L.Error("Failed to parse mqtt message", "err", err, "topic", m.Topic(), "payload", m.Payload())
 			return
 		}
 		s.value = value
@@ -108,7 +108,7 @@ func NewControlledValue[T bool | string | float64](mqtt paho.Client, commandTopi
 		L.Info("Received", "topic", m.Topic(), "payload", m.Payload())
 		value, err := s.parser(m.Payload())
 		if err != nil {
-			L.Error("Failed to parse mqtt message", err, "topic", m.Topic(), "payload", m.Payload())
+			L.Error("Failed to parse mqtt message", "err", err, "topic", m.Topic(), "payload", m.Payload())
 			return
 		}
 		s.Set(value)
@@ -189,7 +189,7 @@ func NewTemperatureSensor(mqtt paho.Client, topic string) *TemperatureSensor {
 		parsed := sensorMqttPayload{}
 		err := json.Unmarshal(m.Payload(), &parsed)
 		if err != nil {
-			L.Error("Failed to parse mqtt message", err, "topic", m.Topic(), "payload", m.Payload())
+			L.Error("Failed to parse mqtt message", "err", err, "topic", m.Topic(), "payload", m.Payload())
 			return
 		}
 		t.values = append(t.values, struct {
