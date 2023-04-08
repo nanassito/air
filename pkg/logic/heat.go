@@ -19,6 +19,8 @@ func TuneHeat(hvac *models.Hvac) {
 		return
 	}
 
+	L.Info("Current temperature", "t", current, "hvac", hvac.Name)
+
 	if current > hvac.AutoPilot.MinTemp.Get()+3 {
 		L.Info("It's way too hot, shutting down", "hvac", hvac.Name)
 		hvac.Mode.Set("OFF")
