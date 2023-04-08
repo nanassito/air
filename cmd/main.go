@@ -19,8 +19,8 @@ func main() {
 	flag.Parse()
 	mqttClient := mqtt.MustNewMqttClient(*server)
 
-	hvacs := []models.Hvac{
-		*models.NewHvacWithDefaultTopics(
+	hvacs := []*models.Hvac{
+		models.NewHvacWithDefaultTopics(
 			mqttClient,
 			"office",
 			mqtt.NewTemperatureSensor(
@@ -28,7 +28,7 @@ func main() {
 				"zigbee2mqtt/server/device/office/followme",
 			),
 		),
-		*models.NewHvacWithDefaultTopics(
+		models.NewHvacWithDefaultTopics(
 			mqttClient,
 			"living",
 			mqtt.NewTemperatureSensor(
@@ -51,7 +51,7 @@ func main() {
 			)
 			if hvac.AutoPilot.Enabled.Get() {
 				L.Info("Autopilot is enabled on this hvac", "hvac", hvac.Name)
-				logic.TuneHeat(&hvac)
+				logic.TuneHeat(hvac)
 			} else {
 				L.Info("Autopilot is disabled on this hvac", "hvac", hvac.Name)
 			}
