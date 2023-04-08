@@ -66,14 +66,18 @@ func TuneHeat(hvac *models.Hvac) {
 
 	switch hvac.DecisionScore {
 	case -100:
+		L.Info("Reducing fan speed and temperature", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
 		models.DecreaseFanSpeed(hvac)
 		hvac.Temperature.Set(hvac.Temperature.Get() - 0.5)
 	case -50:
+		L.Info("Reducing temperature", "hvac", hvac.Name)
 		hvac.Temperature.Set(hvac.Temperature.Get() - 0.5)
 	case 50:
+		L.Info("Increasing temperature", "hvac", hvac.Name)
 		hvac.Temperature.Set(hvac.Temperature.Get() + 0.5)
 	case 100:
+		L.Info("Increasing fan speed and temperature", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
 		models.IncreaseFanSpeed(hvac)
 		hvac.Temperature.Set(hvac.Temperature.Get() + 0.5)
