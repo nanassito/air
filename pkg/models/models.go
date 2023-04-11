@@ -17,6 +17,7 @@ var (
 type autoPilot struct {
 	Enabled *mqtt.ControlledValue[bool]
 	MinTemp *mqtt.ControlledValue[float64]
+	MaxTemp *mqtt.ControlledValue[float64]
 	Sensor  *mqtt.TemperatureSensor
 }
 
@@ -32,6 +33,7 @@ type Hvac struct {
 func (hvac *Hvac) Ping() {
 	hvac.AutoPilot.Enabled.Set(hvac.AutoPilot.Enabled.Get())
 	hvac.AutoPilot.MinTemp.Set(hvac.AutoPilot.MinTemp.Get())
+	hvac.AutoPilot.MaxTemp.Set(hvac.AutoPilot.MaxTemp.Get())
 }
 
 var (
@@ -68,6 +70,17 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 				mqttClient,
 				"air3/"+name+"/autopilot/minTemp/command",
 				"air3/"+name+"/autopilot/minTemp/state",
+				func(payload []byte) (float64, error) {
+					return strconv.ParseFloat(string(payload), 64)
+				},
+				func(value float64) string {
+					return strconv.FormatFloat(value, 'f', 1, 64)
+				},
+			),
+			MaxTemp: mqtt.NewControlledValue(
+				mqttClient,
+				"air3/"+name+"/autopilot/maxTemp/command",
+				"air3/"+name+"/autopilot/maxTemp/state",
 				func(payload []byte) (float64, error) {
 					return strconv.ParseFloat(string(payload), 64)
 				},

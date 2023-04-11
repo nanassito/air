@@ -68,6 +68,7 @@ func main() {
 				"hvac", hvac.Name,
 				"autopilot.enabled", hvac.AutoPilot.Enabled.Get(),
 				"autopilot.minTemp", hvac.AutoPilot.MinTemp.Get(),
+				"autopilot.maxTemp", hvac.AutoPilot.MaxTemp.Get(),
 				"Mode", hvac.Mode.Get(),
 				"Fan", hvac.Fan.Get(),
 				"Temperature", hvac.Temperature.Get(),
