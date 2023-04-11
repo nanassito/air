@@ -57,7 +57,7 @@ func main() {
 			"zaya",
 			mqtt.NewTemperatureSensor(
 				mqttClient,
-				"zigbee2mqtt/server/device/zaya/air",
+				"zigbee2mqtt/raspi/device/zaya/air",
 			),
 		),
 	}
