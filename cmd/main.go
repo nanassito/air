@@ -76,7 +76,24 @@ func main() {
 			)
 			if hvac.AutoPilot.Enabled.Get() {
 				L.Info("Autopilot is enabled on this hvac", "hvac", hvac.Name)
-				logic.TuneHeat(hvac)
+				switch hvac.Mode.Get() {
+				case "HEAT":
+					logic.TuneHeat(hvac)
+				case "COOL":
+					logic.TuneCold(hvac)
+				case "OFF":
+					temp, err := hvac.AutoPilot.Sensor.GetCurrent()
+					if err != nil {
+						L.Error("Can't decide which mode to tune for because I don't know the temperature", "err", err)
+						continue
+					}
+					median := (hvac.AutoPilot.MinTemp.Get() + hvac.AutoPilot.MaxTemp.Get()) / 2
+					if temp > median {
+						logic.TuneCold(hvac)
+					} else {
+						logic.TuneHeat(hvac)
+					}
+				}
 			} else {
 				L.Info("Autopilot is disabled on this hvac", "hvac", hvac.Name)
 			}
