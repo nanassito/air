@@ -29,6 +29,11 @@ type Hvac struct {
 	DecisionScore float64
 }
 
+func (hvac *Hvac) Ping() {
+	hvac.AutoPilot.Enabled.Set(hvac.AutoPilot.Enabled.Get())
+	hvac.AutoPilot.MinTemp.Set(hvac.AutoPilot.MinTemp.Get())
+}
+
 var (
 	fanSpeeds = map[string]string{
 		"AUTO":   "AUTO",

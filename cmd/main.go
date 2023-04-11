@@ -79,6 +79,7 @@ func main() {
 			} else {
 				L.Info("Autopilot is disabled on this hvac", "hvac", hvac.Name)
 			}
+			hvac.Ping()
 		}
 	}
 }
