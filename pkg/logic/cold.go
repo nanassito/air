@@ -20,7 +20,7 @@ func TuneCold(hvac *models.Hvac) {
 
 	L.Info("Current temperature", "t", current, "hvac", hvac.Name)
 
-	if current < hvac.AutoPilot.MaxTemp.Get()-3 {
+	if hvac.Mode.Get() == "COOL" && current < hvac.AutoPilot.MaxTemp.Get()-3 {
 		L.Info("It's way too cold, shutting down", "hvac", hvac.Name)
 		hvac.Mode.Set("OFF")
 		hvac.DecisionScore = 0
