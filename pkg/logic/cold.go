@@ -1,6 +1,8 @@
 package logic
 
 import (
+	"math"
+
 	"github.com/nanassito/air/pkg/models"
 	"github.com/nanassito/air/pkg/mqtt"
 )
@@ -18,19 +20,19 @@ func TuneCold(hvac *models.Hvac) {
 
 	L.Info("Current temperature", "t", current, "hvac", hvac.Name)
 
-	if current > hvac.AutoPilot.MaxTemp.Get()-3 {
+	if current < hvac.AutoPilot.MaxTemp.Get()-3 {
 		L.Info("It's way too cold, shutting down", "hvac", hvac.Name)
 		hvac.Mode.Set("OFF")
 		hvac.DecisionScore = 0
 		return
 	}
 
-	if hvac.Mode.Get() == "OFF" && current <= hvac.AutoPilot.MinTemp.Get()-1 {
-		L.Info("Temperature lowered enough that we should restart the heating cycle.", "hvac", hvac.Name)
+	if hvac.Mode.Get() == "OFF" && current >= hvac.AutoPilot.MaxTemp.Get()-1 {
+		L.Info("Temperature warmed enough that we should restart the cooling cycle.", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
 		hvac.Mode.Set("HEAT")
 		hvac.Fan.Set("AUTO")
-		hvac.Temperature.Set(current - 3)
+		hvac.Temperature.Set(math.Max(hvac.Temperature.Get()-3, hvac.AutoPilot.MaxTemp.Get()))
 		return
 	}
 
@@ -42,21 +44,21 @@ func TuneCold(hvac *models.Hvac) {
 
 	case mqtt.TrendCoolingDown:
 		L.Info("Trend is cooling down", "hvac", hvac.Name)
-		maxOffset = -0.5
+		maxOffset = 0.5
 
 	case mqtt.TrendWarmingUp:
 		L.Info("Trend is warming up", "hvac", hvac.Name)
-		maxOffset = +0.5
+		maxOffset = -0.5
 
 	default:
 		L.Warn("Unknown trend", "trend", hvac.AutoPilot.Sensor.GetTrend(), "hvac", hvac.Name)
 		maxOffset = 0
 	}
 
-	if current >= hvac.AutoPilot.MaxTemp.Get()-maxOffset {
+	if current >= hvac.AutoPilot.MaxTemp.Get()+maxOffset {
 		hvac.DecisionScore -= 1
 		L.Info("Need more cold", "hvac", hvac.Name)
-	} else if current < hvac.AutoPilot.MinTemp.Get()-1-maxOffset {
+	} else if current < hvac.AutoPilot.MinTemp.Get()-1+maxOffset {
 		hvac.DecisionScore += 1
 		L.Info("Need less cold", "hvac", hvac.Name)
 	} else {
