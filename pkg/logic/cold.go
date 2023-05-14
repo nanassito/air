@@ -30,7 +30,7 @@ func TuneCold(hvac *models.Hvac) {
 	if hvac.Mode.Get() == "OFF" && current >= hvac.AutoPilot.MaxTemp.Get()-1 {
 		L.Info("Temperature warmed enough that we should restart the cooling cycle.", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
-		hvac.Mode.Set("HEAT")
+		hvac.Mode.Set("COOL")
 		hvac.Fan.Set("AUTO")
 		hvac.Temperature.Set(math.Max(hvac.Temperature.Get()-3, hvac.AutoPilot.MaxTemp.Get()))
 		return
