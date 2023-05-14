@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
 
@@ -28,6 +29,7 @@ type Hvac struct {
 	Fan           *mqtt.ThirdPartyValue[string]
 	Temperature   *mqtt.ThirdPartyValue[float64]
 	DecisionScore float64
+	LastOff       time.Time
 }
 
 func (hvac *Hvac) Ping() {

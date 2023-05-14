@@ -1,6 +1,8 @@
 package logic
 
 import (
+	"time"
+
 	"github.com/nanassito/air/pkg/models"
 	"github.com/nanassito/air/pkg/mqtt"
 	"github.com/nanassito/air/pkg/utils"
@@ -25,10 +27,15 @@ func TuneHeat(hvac *models.Hvac) {
 		L.Info("It's way too hot, shutting down", "hvac", hvac.Name)
 		hvac.Mode.Set("OFF")
 		hvac.DecisionScore = 0
+		hvac.LastOff = time.Now()
 		return
 	}
 
 	if hvac.Mode.Get() == "OFF" && current <= hvac.AutoPilot.MinTemp.Get()+1 {
+		if hvac.LastOff.After(time.Now().Add(30 * time.Minute)) {
+			L.Info("Hvac was shutdown not long enough ago.", "hvac", hvac.Name)
+			return
+		}
 		L.Info("Temperature lowered enough that we should restart the heating cycle.", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
 		hvac.Mode.Set("HEAT")
