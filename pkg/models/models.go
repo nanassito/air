@@ -15,11 +15,16 @@ var (
 	ErrBadPayload = errors.New("invalid mqtt payload")
 )
 
+type sensors struct {
+	Air  *mqtt.TemperatureSensor
+	Unit *mqtt.TemperatureSensor
+}
+
 type autoPilot struct {
 	Enabled *mqtt.ControlledValue[bool]
 	MinTemp *mqtt.ControlledValue[float64]
 	MaxTemp *mqtt.ControlledValue[float64]
-	Sensor  *mqtt.TemperatureSensor
+	Sensors *sensors
 }
 
 type Hvac struct {
@@ -90,7 +95,13 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 					return strconv.FormatFloat(value, 'f', 1, 64)
 				},
 			),
-			Sensor: temperatureSensor,
+			Sensors: &sensors{
+				Air: temperatureSensor,
+				Unit: mqtt.NewRawTemperatureSensor(
+					mqttClient,
+					"esphome/"+name+"/current_temperature_state",
+				),
+			},
 		},
 		Mode: mqtt.NewThirdPartyValue(
 			mqttClient,

@@ -9,7 +9,7 @@ import (
 )
 
 func TuneCold(hvac *models.Hvac) {
-	current, err := hvac.AutoPilot.Sensor.GetCurrent()
+	current, err := hvac.AutoPilot.Sensors.Air.GetCurrent()
 	if err != nil {
 		L.Error("Don't have a current temperature from the sensor yet.", "hvac", hvac.Name)
 		return
@@ -38,12 +38,18 @@ func TuneCold(hvac *models.Hvac) {
 		hvac.DecisionScore = 0
 		hvac.Mode.Set("COOL")
 		hvac.Fan.Set("AUTO")
-		hvac.Temperature.Set(math.Max(hvac.Temperature.Get()-3, hvac.AutoPilot.MaxTemp.Get()))
+		inUnitTemp, err := hvac.AutoPilot.Sensors.Unit.GetCurrent()
+		if err == nil {
+			hvac.Temperature.Set(math.Max(inUnitTemp-3, hvac.AutoPilot.MaxTemp.Get()))
+		} else {
+			L.Warn("Couldn't read the in-unit temperature.", "hvac", hvac.Name)
+			hvac.Temperature.Set(hvac.AutoPilot.MaxTemp.Get())
+		}
 		return
 	}
 
 	maxOffset := 0.0
-	switch hvac.AutoPilot.Sensor.GetTrend() {
+	switch hvac.AutoPilot.Sensors.Air.GetTrend() {
 	case mqtt.TrendStable:
 		L.Info("Trend is stable", "hvac", hvac.Name)
 		maxOffset = 0
@@ -57,7 +63,7 @@ func TuneCold(hvac *models.Hvac) {
 		maxOffset = -0.5
 
 	default:
-		L.Warn("Unknown trend", "trend", hvac.AutoPilot.Sensor.GetTrend(), "hvac", hvac.Name)
+		L.Warn("Unknown trend", "trend", hvac.AutoPilot.Sensors.Air.GetTrend(), "hvac", hvac.Name)
 		maxOffset = 0
 	}
 

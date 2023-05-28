@@ -23,7 +23,7 @@ func main() {
 		models.NewHvacWithDefaultTopics(
 			mqttClient,
 			"office",
-			mqtt.NewTemperatureSensor(
+			mqtt.NewJsonTemperatureSensor(
 				mqttClient,
 				"zigbee2mqtt/server/device/office/followme",
 			),
@@ -31,7 +31,7 @@ func main() {
 		models.NewHvacWithDefaultTopics(
 			mqttClient,
 			"living",
-			mqtt.NewTemperatureSensor(
+			mqtt.NewJsonTemperatureSensor(
 				mqttClient,
 				"zigbee2mqtt/server/device/living/followme",
 			),
@@ -39,7 +39,7 @@ func main() {
 		models.NewHvacWithDefaultTopics(
 			mqttClient,
 			"kitchen",
-			mqtt.NewTemperatureSensor(
+			mqtt.NewJsonTemperatureSensor(
 				mqttClient,
 				"zigbee2mqtt/server/device/kitchen/followme",
 			),
@@ -47,7 +47,7 @@ func main() {
 		models.NewHvacWithDefaultTopics(
 			mqttClient,
 			"parent",
-			mqtt.NewTemperatureSensor(
+			mqtt.NewJsonTemperatureSensor(
 				mqttClient,
 				"zigbee2mqtt/server/device/parent/followme",
 			),
@@ -55,7 +55,7 @@ func main() {
 		models.NewHvacWithDefaultTopics(
 			mqttClient,
 			"zaya",
-			mqtt.NewTemperatureSensor(
+			mqtt.NewJsonTemperatureSensor(
 				mqttClient,
 				"zigbee2mqtt/raspi/device/zaya/air",
 			),
@@ -82,7 +82,7 @@ func main() {
 				case "COOL":
 					logic.TuneCold(hvac)
 				case "OFF":
-					temp, err := hvac.AutoPilot.Sensor.GetCurrent()
+					temp, err := hvac.AutoPilot.Sensors.Air.GetCurrent()
 					if err != nil {
 						L.Error("Can't decide which mode to tune for because I don't know the temperature", "err", err)
 						continue

@@ -11,7 +11,7 @@ import (
 var L = utils.Logger
 
 func TuneHeat(hvac *models.Hvac) {
-	current, err := hvac.AutoPilot.Sensor.GetCurrent()
+	current, err := hvac.AutoPilot.Sensors.Air.GetCurrent()
 	if err != nil {
 		L.Error("Don't have a current temperature from the sensor yet.", "hvac", hvac.Name)
 		return
@@ -45,7 +45,7 @@ func TuneHeat(hvac *models.Hvac) {
 	}
 
 	minOffset := 0.0
-	switch hvac.AutoPilot.Sensor.GetTrend() {
+	switch hvac.AutoPilot.Sensors.Air.GetTrend() {
 	case mqtt.TrendStable:
 		L.Info("Trend is stable", "hvac", hvac.Name)
 		minOffset = 0
@@ -59,7 +59,7 @@ func TuneHeat(hvac *models.Hvac) {
 		minOffset = -0.5
 
 	default:
-		L.Warn("Unknown trend", "trend", hvac.AutoPilot.Sensor.GetTrend(), "hvac", hvac.Name)
+		L.Warn("Unknown trend", "trend", hvac.AutoPilot.Sensors.Air.GetTrend(), "hvac", hvac.Name)
 		minOffset = 0
 	}
 

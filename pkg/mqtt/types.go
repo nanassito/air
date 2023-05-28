@@ -3,6 +3,7 @@ package mqtt
 import (
 	"encoding/json"
 	"errors"
+	"strconv"
 	"time"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
@@ -129,6 +130,17 @@ type sensorMqttPayload struct {
 	Temperature float64 `json:"temperature"`
 }
 
+func (t *TemperatureSensor) pruneOldData() {
+	for i, v := range t.values {
+		if v.when.Before(time.Now().Add(-1 * time.Hour)) { // Prune data older than 1h
+			continue
+		}
+		// t.values is ordered by timestamp so we know all remaining data should be kept.
+		t.values = t.values[i:]
+		break
+	}
+}
+
 func (t *TemperatureSensor) GetCurrent() (float64, error) {
 	if len(t.values) == 0 {
 		return 0, ErrNotInitializedYet
@@ -180,7 +192,7 @@ func (t *TemperatureSensor) GetTrend() Trend {
 	}
 }
 
-func NewTemperatureSensor(mqtt paho.Client, topic string) *TemperatureSensor {
+func NewJsonTemperatureSensor(mqtt paho.Client, topic string) *TemperatureSensor {
 	t := TemperatureSensor{
 		values: make([]sensorRecord, 0),
 	}
@@ -192,18 +204,25 @@ func NewTemperatureSensor(mqtt paho.Client, topic string) *TemperatureSensor {
 			L.Error("Failed to parse mqtt message", "err", err, "topic", m.Topic(), "payload", m.Payload())
 			return
 		}
-		t.values = append(t.values, struct {
-			when  time.Time
-			value float64
-		}{when: time.Now(), value: parsed.Temperature})
-		for i, v := range t.values {
-			if v.when.Before(time.Now().Add(-1 * time.Hour)) { // Prune data older than 1h
-				continue
-			}
-			// t.values is ordered by timestamp so we know all remaining data should be kept.
-			t.values = t.values[i:]
-			break
+		t.values = append(t.values, sensorRecord{when: time.Now(), value: parsed.Temperature})
+		t.pruneOldData()
+	})
+	return &t
+}
+
+func NewRawTemperatureSensor(mqtt paho.Client, topic string) *TemperatureSensor {
+	t := TemperatureSensor{
+		values: make([]sensorRecord, 0),
+	}
+	mqtt.Subscribe(topic, qos, func(c paho.Client, m paho.Message) {
+		L.Info("Received", "topic", m.Topic(), "payload", m.Payload())
+		value, err := strconv.ParseFloat(string(m.Payload()), 64)
+		if err != nil {
+			L.Error("Failed to parse mqtt message", "err", err, "topic", m.Topic(), "payload", m.Payload())
+			return
 		}
+		t.values = append(t.values, sensorRecord{when: time.Now(), value: value})
+		t.pruneOldData()
 	})
 	return &t
 }
