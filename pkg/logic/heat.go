@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"errors"
 	"time"
 
 	"github.com/nanassito/air/pkg/models"
@@ -10,24 +11,24 @@ import (
 
 var L = utils.Logger
 
-func TuneHeat(hvac *models.Hvac) {
+func getCurrentTemp(hvac *models.Hvac) (float64, error) {
 	current, err := hvac.AutoPilot.Sensors.Air.GetCurrent()
 	if err != nil {
-		L.Error("Don't have a current temperature from the sensor yet.", "hvac", hvac.Name)
-		return
+		return 0, errors.New("don't have a current temperature from the sensor yet")
 	}
 	if !hvac.AutoPilot.MinTemp.IsReady() {
 		L.Error("autopilot min temperature isn't initialized yet.", "hvac", hvac.Name)
-		return
+		return 0, errors.New("autopilot min temperature isn't initialized yet")
 	}
 
 	L.Info("Current temperature", "t", current, "hvac", hvac.Name)
+	return current, nil
+}
 
-	if hvac.Mode.Get() == "HEAT" && current > hvac.AutoPilot.MinTemp.Get()+3 {
-		L.Info("It's way too hot, shutting down", "hvac", hvac.Name)
-		hvac.Mode.Set("OFF")
-		hvac.DecisionScore = 0
-		hvac.LastOff = time.Now()
+func StartHeat(hvac *models.Hvac) {
+	current, err := getCurrentTemp(hvac)
+	if err != nil {
+		L.Error(err.Error(), "hvac", hvac.Name)
 		return
 	}
 
@@ -41,6 +42,22 @@ func TuneHeat(hvac *models.Hvac) {
 		hvac.Mode.Set("HEAT")
 		hvac.Fan.Set("AUTO")
 		hvac.Temperature.Set(hvac.AutoPilot.MinTemp.Get())
+		return
+	}
+}
+
+func TuneHeat(hvac *models.Hvac) {
+	current, err := getCurrentTemp(hvac)
+	if err != nil {
+		L.Error(err.Error(), "hvac", hvac.Name)
+		return
+	}
+
+	if hvac.Mode.Get() == "HEAT" && current > hvac.AutoPilot.MinTemp.Get()+3 {
+		L.Info("It's way too hot, shutting down", "hvac", hvac.Name)
+		hvac.Mode.Set("OFF")
+		hvac.DecisionScore = 0
+		hvac.LastOff = time.Now()
 		return
 	}
 
