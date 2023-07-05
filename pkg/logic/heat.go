@@ -1,29 +1,11 @@
 package logic
 
 import (
-	"errors"
 	"time"
 
 	"github.com/nanassito/air/pkg/models"
 	"github.com/nanassito/air/pkg/mqtt"
-	"github.com/nanassito/air/pkg/utils"
 )
-
-var L = utils.Logger
-
-func getCurrentTemp(hvac *models.Hvac) (float64, error) {
-	current, err := hvac.AutoPilot.Sensors.Air.GetCurrent()
-	if err != nil {
-		return 0, errors.New("don't have a current temperature from the sensor yet")
-	}
-	if !hvac.AutoPilot.MinTemp.IsReady() {
-		L.Error("autopilot min temperature isn't initialized yet.", "hvac", hvac.Name)
-		return 0, errors.New("autopilot min temperature isn't initialized yet")
-	}
-
-	L.Info("Current temperature", "t", current, "hvac", hvac.Name)
-	return current, nil
-}
 
 func StartHeat(hvac *models.Hvac) {
 	current, err := getCurrentTemp(hvac)
@@ -32,7 +14,7 @@ func StartHeat(hvac *models.Hvac) {
 		return
 	}
 
-	if hvac.Mode.Get() == "OFF" && current <= hvac.AutoPilot.MinTemp.Get()+1 {
+	if current <= hvac.AutoPilot.MinTemp.Get()+1 {
 		if hvac.LastOff.After(time.Now().Add(30 * time.Minute)) {
 			L.Info("Hvac was shutdown not long enough ago.", "hvac", hvac.Name)
 			return
@@ -53,7 +35,7 @@ func TuneHeat(hvac *models.Hvac) {
 		return
 	}
 
-	if hvac.Mode.Get() == "HEAT" && current > hvac.AutoPilot.MinTemp.Get()+3 {
+	if current > hvac.AutoPilot.MinTemp.Get()+3 {
 		L.Info("It's way too hot, shutting down", "hvac", hvac.Name)
 		hvac.Mode.Set("OFF")
 		hvac.DecisionScore = 0
