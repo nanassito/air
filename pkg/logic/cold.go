@@ -14,9 +14,13 @@ func StartCold(hvac *models.Hvac) {
 		L.Error(err.Error(), "hvac", hvac.Name)
 		return
 	}
+	if !hvac.AutoPilot.MaxTemp.IsReady() {
+		L.Error("autopilot max temperature isn't initialized yet.", "hvac", hvac.Name)
+		return
+	}
 
 	if current >= hvac.AutoPilot.MinTemp.Get()-1 {
-		if hvac.LastOff.After(time.Now().Add(30 * time.Minute)) {
+		if hvac.Mode.UnchangedFor() < 30*time.Minute {
 			L.Info("Hvac was shutdown not long enough ago.", "hvac", hvac.Name)
 			return
 		}
@@ -40,12 +44,15 @@ func TuneCold(hvac *models.Hvac) {
 		L.Error(err.Error(), "hvac", hvac.Name)
 		return
 	}
+	if !hvac.AutoPilot.MaxTemp.IsReady() {
+		L.Error("autopilot max temperature isn't initialized yet.", "hvac", hvac.Name)
+		return
+	}
 
-	if current < hvac.AutoPilot.MinTemp.Get()-3 {
+	if current < hvac.AutoPilot.MaxTemp.Get()-3 {
 		L.Info("It's way too cold, shutting down", "hvac", hvac.Name)
 		hvac.Mode.Set("OFF")
 		hvac.DecisionScore = 0
-		hvac.LastOff = time.Now()
 		return
 	}
 

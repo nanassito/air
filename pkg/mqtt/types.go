@@ -14,49 +14,77 @@ var (
 	ErrNotInitializedYet = errors.New("not initialized yet")
 )
 
+type valueWithHistory[T comparable] struct {
+	MaxAge   time.Duration
+	timeData map[time.Time]T
+	latest   time.Time
+}
+
+func (s *valueWithHistory[T]) Insert(newValue T) {
+	if value, ok := s.timeData[s.latest]; ok && value == newValue {
+		return // Value is unchanged
+	}
+	timeData := make(map[time.Time]T, len(s.timeData))
+	for when, value := range s.timeData {
+		if when.After(time.Now().Add(-s.MaxAge)) && when != s.latest {
+			timeData[when] = value
+		}
+	}
+	now := time.Now()
+	timeData[now] = newValue
+	s.latest = now
+	s.timeData = timeData
+}
+
 type ThirdPartyValue[T bool | string | float64] struct {
 	mqtt         paho.Client
-	value        T
+	values       *valueWithHistory[T]
 	commandTopic string
 	statusTopic  string
 	parser       func([]byte) (T, error)
 	formatter    func(T) string
-	initialized  bool
 }
 
 func (s *ThirdPartyValue[T]) IsReady() bool {
-	return s.initialized
+	return len(s.values.timeData) >= 1
 }
 
 func (s *ThirdPartyValue[T]) Get() T {
-	return s.value
+	return s.values.timeData[s.values.latest]
+}
+
+func (s *ThirdPartyValue[T]) UnchangedFor() time.Duration {
+	if len(s.values.timeData) > 1 {
+		return time.Since(s.values.latest)
+	} else {
+		return 24 * time.Hour // Just something large enough since we don't really know
+	}
 }
 
 func (s *ThirdPartyValue[T]) Set(t T) {
 	s.mqtt.Publish(s.commandTopic, qos, false, s.formatter(t))
 
-	// Check that the new value is ackenowledged and retry every 100ms for up to 1s if it isn't
+	// Check that the new value is acknowledged and retry every 100ms for up to 1s if it isn't
 	ticker := time.NewTicker(100 * time.Millisecond)
 	for i := 0; i < 10; i++ {
 		<-ticker.C
-		if s.value == t {
+		if s.IsReady() && s.Get() == t {
 			return
 		} else {
-			L.Warn("ThirdPartyValue was not acknowledged", "desired", t, "acknowledged", s.value, "hvac")
+			L.Warn("ThirdPartyValue was not acknowledged", "desired", t, "acknowledged", s.Get(), "hvac")
 		}
 	}
-	L.Error("Failed to set a ThirdPartyValue", "desired", t, "acknowledged", s.value, "hvac")
+	L.Error("Failed to set a ThirdPartyValue", "desired", t, "acknowledged", s.Get(), "hvac")
 }
 
 func NewThirdPartyValue[T bool | string | float64](mqtt paho.Client, commandTopic string, statusTopic string, parser func([]byte) (T, error), formatter func(T) string) *ThirdPartyValue[T] {
 	s := ThirdPartyValue[T]{
 		mqtt:         mqtt,
-		value:        *new(T),
+		values:       &valueWithHistory[T]{MaxAge: 1 * time.Hour},
 		commandTopic: commandTopic,
 		statusTopic:  statusTopic,
 		parser:       parser,
 		formatter:    formatter,
-		initialized:  false,
 	}
 	s.mqtt.Subscribe(s.statusTopic, qos, func(c paho.Client, m paho.Message) {
 		L.Info("Received", "topic", m.Topic(), "payload", m.Payload())
@@ -65,8 +93,7 @@ func NewThirdPartyValue[T bool | string | float64](mqtt paho.Client, commandTopi
 			L.Error("Failed to parse mqtt message", "err", err, "topic", m.Topic(), "payload", m.Payload())
 			return
 		}
-		s.value = value
-		s.initialized = true
+		s.values.Insert(value)
 	})
 	return &s
 }
@@ -126,7 +153,7 @@ type TemperatureSensor struct {
 	values []sensorRecord
 }
 
-type sensorMqttPayload struct {
+type SensorMqttPayload struct {
 	Temperature float64 `json:"temperature"`
 }
 
@@ -198,7 +225,7 @@ func NewJsonTemperatureSensor(mqtt paho.Client, topic string) *TemperatureSensor
 	}
 	mqtt.Subscribe(topic, qos, func(c paho.Client, m paho.Message) {
 		L.Info("Received", "topic", m.Topic(), "payload", m.Payload())
-		parsed := sensorMqttPayload{}
+		parsed := SensorMqttPayload{}
 		err := json.Unmarshal(m.Payload(), &parsed)
 		if err != nil {
 			L.Error("Failed to parse mqtt message", "err", err, "topic", m.Topic(), "payload", m.Payload())

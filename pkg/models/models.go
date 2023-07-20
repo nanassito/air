@@ -4,15 +4,29 @@ import (
 	"errors"
 	"strconv"
 	"strings"
-	"time"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
+	"github.com/golang-collections/collections/set"
 
 	"github.com/nanassito/air/pkg/mqtt"
+	"github.com/nanassito/air/pkg/utils"
 )
 
 var (
 	ErrBadPayload = errors.New("invalid mqtt payload")
+	L             = utils.Logger
+	fanSpeeds     = map[string]string{
+		"AUTO":   "AUTO",
+		"LOW":    "LOW",
+		"MEDIUM": "MEDIUM",
+		"HIGH":   "HIGH",
+	}
+	modes = map[string]string{
+		"OFF":      "OFF",
+		"FAN_ONLY": "FAN_ONLY",
+		"HEAT":     "HEAT",
+		"COOL":     "COOL",
+	}
 )
 
 type sensors struct {
@@ -27,6 +41,25 @@ type autoPilot struct {
 	Sensors *sensors
 }
 
+type Pump struct {
+	Units []*Hvac
+}
+
+func (pump *Pump) GetUsableModes() *set.Set {
+	usableModes := set.New()
+	for _, mode := range modes {
+		usableModes.Insert(mode)
+	}
+	for _, hvac := range pump.Units {
+		usableModes = usableModes.Intersection(set.New("OFF", hvac.Mode.Get()))
+	}
+	if usableModes.Has("OFF") && usableModes.Len() == 1 {
+		return set.New("OFF", "HEAT", "COOL", "FAN_ONLY")
+	}
+	L.Info("", "usableModes", usableModes)
+	return usableModes
+}
+
 type Hvac struct {
 	Name          string
 	AutoPilot     *autoPilot
@@ -34,7 +67,39 @@ type Hvac struct {
 	Fan           *mqtt.ThirdPartyValue[string]
 	Temperature   *mqtt.ThirdPartyValue[float64]
 	DecisionScore float64
-	LastOff       time.Time
+}
+
+func (hvac *Hvac) Log() {
+	L.Info("hvac state",
+		"hvac", hvac.Name,
+		"autopilot.enabled", hvac.AutoPilot.Enabled.Get(),
+		"autopilot.minTemp", hvac.AutoPilot.MinTemp.Get(),
+		"autopilot.maxTemp", hvac.AutoPilot.MaxTemp.Get(),
+		"Mode", hvac.Mode.Get(),
+		"Fan", hvac.Fan.Get(),
+		"Temperature", hvac.Temperature.Get(),
+		"decisionScore", hvac.DecisionScore,
+	)
+}
+
+func (hvac *Hvac) DecreaseFanSpeed() {
+	switch hvac.Fan.Get() {
+	case "MEDIUM":
+		hvac.Fan.Set("LOW")
+	case "HIGH":
+		hvac.Fan.Set("MEDIUM")
+	}
+}
+
+func (hvac *Hvac) IncreaseFanSpeed() {
+	switch hvac.Fan.Get() {
+	case "AUTO":
+		hvac.Fan.Set("MEDIUM")
+	case "LOW":
+		hvac.Fan.Set("MEDIUM")
+	case "MEDIUM":
+		hvac.Fan.Set("HIGH")
+	}
 }
 
 func (hvac *Hvac) Ping() {
@@ -42,21 +107,6 @@ func (hvac *Hvac) Ping() {
 	hvac.AutoPilot.MinTemp.Set(hvac.AutoPilot.MinTemp.Get())
 	hvac.AutoPilot.MaxTemp.Set(hvac.AutoPilot.MaxTemp.Get())
 }
-
-var (
-	fanSpeeds = map[string]string{
-		"AUTO":   "AUTO",
-		"LOW":    "LOW",
-		"MEDIUM": "MEDIUM",
-		"HIGH":   "HIGH",
-	}
-	modes = map[string]string{
-		"OFF":      "OFF",
-		"FAN_ONLY": "FAN_ONLY",
-		"HEAT":     "HEAT",
-		"COOL":     "COOL",
-	}
-)
 
 func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSensor *mqtt.TemperatureSensor) *Hvac {
 	hvac := Hvac{
@@ -149,24 +199,4 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 		DecisionScore: 0,
 	}
 	return &hvac
-}
-
-func DecreaseFanSpeed(hvac *Hvac) {
-	switch hvac.Fan.Get() {
-	case "MEDIUM":
-		hvac.Fan.Set("LOW")
-	case "HIGH":
-		hvac.Fan.Set("MEDIUM")
-	}
-}
-
-func IncreaseFanSpeed(hvac *Hvac) {
-	switch hvac.Fan.Get() {
-	case "AUTO":
-		hvac.Fan.Set("MEDIUM")
-	case "LOW":
-		hvac.Fan.Set("MEDIUM")
-	case "MEDIUM":
-		hvac.Fan.Set("HIGH")
-	}
 }

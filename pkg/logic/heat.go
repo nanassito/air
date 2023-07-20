@@ -13,9 +13,13 @@ func StartHeat(hvac *models.Hvac) {
 		L.Error(err.Error(), "hvac", hvac.Name)
 		return
 	}
+	if !hvac.AutoPilot.MinTemp.IsReady() {
+		L.Error("autopilot min temperature isn't initialized yet.", "hvac", hvac.Name)
+		return
+	}
 
 	if current <= hvac.AutoPilot.MinTemp.Get()+1 {
-		if hvac.LastOff.After(time.Now().Add(30 * time.Minute)) {
+		if hvac.Mode.UnchangedFor() < 30*time.Minute {
 			L.Info("Hvac was shutdown not long enough ago.", "hvac", hvac.Name)
 			return
 		}
@@ -34,12 +38,15 @@ func TuneHeat(hvac *models.Hvac) {
 		L.Error(err.Error(), "hvac", hvac.Name)
 		return
 	}
+	if !hvac.AutoPilot.MinTemp.IsReady() {
+		L.Error("autopilot min temperature isn't initialized yet.", "hvac", hvac.Name)
+		return
+	}
 
 	if current > hvac.AutoPilot.MinTemp.Get()+3 {
 		L.Info("It's way too hot, shutting down", "hvac", hvac.Name)
 		hvac.Mode.Set("OFF")
 		hvac.DecisionScore = 0
-		hvac.LastOff = time.Now()
 		return
 	}
 
@@ -76,7 +83,7 @@ func TuneHeat(hvac *models.Hvac) {
 	case -100:
 		L.Info("Reducing fan speed and temperature", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
-		models.DecreaseFanSpeed(hvac)
+		hvac.DecreaseFanSpeed()
 		hvac.Temperature.Set(hvac.Temperature.Get() - 0.5)
 	case -50:
 		L.Info("Reducing temperature", "hvac", hvac.Name)
@@ -87,7 +94,7 @@ func TuneHeat(hvac *models.Hvac) {
 	case 100:
 		L.Info("Increasing fan speed and temperature", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
-		models.IncreaseFanSpeed(hvac)
+		hvac.IncreaseFanSpeed()
 		hvac.Temperature.Set(hvac.Temperature.Get() + 0.5)
 	}
 	L.Info("Completing TuneHeat", "hvac", hvac.Name, "decisionScore", hvac.DecisionScore)
