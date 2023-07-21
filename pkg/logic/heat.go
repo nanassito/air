@@ -43,7 +43,10 @@ func TuneHeat(hvac *models.Hvac) {
 		return
 	}
 
-	if current > hvac.AutoPilot.MinTemp.Get()+3 {
+	minDesired := hvac.AutoPilot.MinTemp.Get()
+	L.Info("Tuning heat", "current", current, "minDesired", hvac.AutoPilot.MaxTemp.Get())
+
+	if current > minDesired+3 {
 		L.Info("It's way too hot, shutting down", "hvac", hvac.Name)
 		hvac.Mode.Set("OFF")
 		hvac.DecisionScore = 0
@@ -69,10 +72,10 @@ func TuneHeat(hvac *models.Hvac) {
 		minOffset = 0
 	}
 
-	if current <= hvac.AutoPilot.MinTemp.Get()+minOffset {
+	if current <= minDesired+minOffset {
 		hvac.DecisionScore += 1
 		L.Info("Need more heat", "hvac", hvac.Name)
-	} else if current > hvac.AutoPilot.MinTemp.Get()+1+minOffset {
+	} else if current > minDesired+1+minOffset {
 		hvac.DecisionScore -= 1
 		L.Info("Need less heat", "hvac", hvac.Name)
 	} else {
