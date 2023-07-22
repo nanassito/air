@@ -19,7 +19,7 @@ func StartCold(hvac *models.Hvac) {
 		return
 	}
 
-	if current >= hvac.AutoPilot.MinTemp.Get()-1 {
+	if current >= hvac.AutoPilot.MaxTemp.Get()-1 {
 		if hvac.Mode.UnchangedFor() < 30*time.Minute {
 			L.Info("Hvac was shutdown not long enough ago.", "hvac", hvac.Name)
 			return
