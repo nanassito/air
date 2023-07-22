@@ -70,7 +70,7 @@ func (s *ThirdPartyValue[T]) Set(t T) {
 	}
 
 	// Check that the new value is acknowledged and retry every 100ms for up to 1s if it isn't
-	ticker := time.NewTicker(100 * time.Millisecond)
+	ticker := time.NewTicker(300 * time.Millisecond)
 	for i := 0; i < 10; i++ {
 		<-ticker.C
 		if s.IsReady() && s.Get() == t {
