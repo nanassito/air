@@ -62,7 +62,12 @@ func (s *ThirdPartyValue[T]) UnchangedFor() time.Duration {
 }
 
 func (s *ThirdPartyValue[T]) Set(t T) {
-	s.mqtt.Publish(s.commandTopic, qos, false, s.formatter(t))
+	rs := s.mqtt.Publish(s.commandTopic, qos, false, s.formatter(t))
+	rs.Wait()
+	if err := rs.Error(); err != nil {
+		L.Error("mqtt error", "err", err, "commandTopic", s.commandTopic)
+		return
+	}
 
 	// Check that the new value is acknowledged and retry every 100ms for up to 1s if it isn't
 	ticker := time.NewTicker(100 * time.Millisecond)
@@ -71,10 +76,10 @@ func (s *ThirdPartyValue[T]) Set(t T) {
 		if s.IsReady() && s.Get() == t {
 			return
 		} else {
-			L.Warn("ThirdPartyValue was not acknowledged", "desired", t, "acknowledged", s.Get())
+			L.Warn("ThirdPartyValue was not acknowledged", "desired", t, "acknowledged", s.Get(), "statusTopic", s.statusTopic)
 		}
 	}
-	L.Error("Failed to set a ThirdPartyValue", "desired", t, "acknowledged", s.Get())
+	L.Error("Failed to set a ThirdPartyValue", "desired", t, "acknowledged", s.Get(), "statusTopic", s.statusTopic)
 }
 
 func NewThirdPartyValue[T bool | string | float64](mqtt paho.Client, commandTopic string, statusTopic string, parser func([]byte) (T, error), formatter func(T) string) *ThirdPartyValue[T] {
