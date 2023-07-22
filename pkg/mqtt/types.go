@@ -71,10 +71,10 @@ func (s *ThirdPartyValue[T]) Set(t T) {
 		if s.IsReady() && s.Get() == t {
 			return
 		} else {
-			L.Warn("ThirdPartyValue was not acknowledged", "desired", t, "acknowledged", s.Get(), "hvac")
+			L.Warn("ThirdPartyValue was not acknowledged", "desired", t, "acknowledged", s.Get())
 		}
 	}
-	L.Error("Failed to set a ThirdPartyValue", "desired", t, "acknowledged", s.Get(), "hvac")
+	L.Error("Failed to set a ThirdPartyValue", "desired", t, "acknowledged", s.Get())
 }
 
 func NewThirdPartyValue[T bool | string | float64](mqtt paho.Client, commandTopic string, statusTopic string, parser func([]byte) (T, error), formatter func(T) string) *ThirdPartyValue[T] {

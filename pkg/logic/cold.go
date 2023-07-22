@@ -24,7 +24,7 @@ func StartCold(hvac *models.Hvac) {
 			L.Info("Hvac was shutdown not long enough ago.", "hvac", hvac.Name)
 			return
 		}
-		L.Info("Temperature rised enough that we should restart the heating cycle.", "hvac", hvac.Name)
+		L.Info("Temperature rised enough that we should restart the cooling cycle.", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
 		inUnit, err := hvac.AutoPilot.Sensors.Unit.GetCurrent()
 		if err != nil {
