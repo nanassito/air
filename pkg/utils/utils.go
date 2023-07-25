@@ -7,7 +7,7 @@ import (
 	"golang.org/x/exp/slog"
 )
 
-var Logger = slog.New(slog.HandlerOptions{
+var Logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 	AddSource: true,
 	ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
 		if a.Key == slog.TimeKey {
@@ -18,4 +18,4 @@ var Logger = slog.New(slog.HandlerOptions{
 		}
 		return a
 	},
-}.NewTextHandler(os.Stdout))
+}))
