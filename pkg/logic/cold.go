@@ -89,11 +89,11 @@ func TuneCold(hvac *models.Hvac) {
 	}
 
 	switch hvac.DecisionScore {
-	case -100:
+	case -40:
 		L.Info("Reducing temperature", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
 		hvac.Temperature.Set(hvac.Temperature.Get() - 0.5)
-	case 100:
+	case 40:
 		L.Info("Increasing temperature", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
 		hvac.Temperature.Set(hvac.Temperature.Get() + 0.5)
