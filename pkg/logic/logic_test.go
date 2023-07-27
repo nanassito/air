@@ -109,8 +109,10 @@ func TestDontFlipMode(t *testing.T) {
 	roomTemp.Set(18) // The AC cooled off the room too much
 
 	logic.TunePump(pumps[0])
+	logic.TunePump(pumps[0]) // Run multiple time to ensure we shut off and don't flap
+	logic.TunePump(pumps[0])
 
-	is.Equal("OFF", pumps[0].Units[0].Mode.Get()) // OFF Because we are far from the target
+	is.Equal("OFF", pumps[0].Units[0].Mode.Get())
 }
 
 func TestStops(t *testing.T) {

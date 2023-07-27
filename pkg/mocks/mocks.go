@@ -5,10 +5,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
 	"github.com/nanassito/air/pkg/mqtt"
 )
+
+type token struct{}
+
+func (t *token) Wait() bool { return true }
+
+func (t *token) WaitTimeout(_ time.Duration) bool { return true }
+
+func (t *token) Done() <-chan struct{} {
+	var complete chan struct{}
+	return complete
+}
+
+func (t *token) Error() error { return nil }
 
 type message struct {
 	topic   string
@@ -74,17 +88,17 @@ func (m MockMqtt) Publish(topic string, qos byte, retained bool, payload interfa
 			callback(m, &message{topic: topic, payload: data})
 		}
 	}
-	return &paho.PublishToken{}
+	return &token{}
 }
 func (m MockMqtt) Subscribe(topic string, qos byte, callback paho.MessageHandler) paho.Token {
 	if _, ok := m.router[topic]; !ok {
 		m.router[topic] = make([]paho.MessageHandler, 0)
 	}
 	m.router[topic] = append(m.router[topic], callback)
-	return &paho.SubscribeToken{}
+	return &token{}
 }
 func (m MockMqtt) SubscribeMultiple(filters map[string]byte, callback paho.MessageHandler) paho.Token {
-	return &paho.SubscribeToken{}
+	return &token{}
 }
 func (m MockMqtt) Unsubscribe(topics ...string) paho.Token             { return nil }
 func (m MockMqtt) AddRoute(topic string, callback paho.MessageHandler) {}
