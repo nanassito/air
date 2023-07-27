@@ -8,6 +8,11 @@ import (
 )
 
 func StartHeat(hvac *models.Hvac) {
+	if hvac.Mode.UnchangedFor() < 30*time.Minute {
+		L.Error("Hvac mode changed recently, preventing flapping.")
+		return
+	}
+
 	current, err := getCurrentTemp(hvac)
 	if err != nil {
 		L.Error(err.Error(), "hvac", hvac.Name)

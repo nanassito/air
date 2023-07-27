@@ -26,7 +26,7 @@ func (s *valueWithHistory[T]) Insert(newValue T) {
 	}
 	timeData := make(map[time.Time]T, len(s.timeData))
 	for when, value := range s.timeData {
-		if when.After(time.Now().Add(-s.MaxAge)) && when != s.latest {
+		if time.Since(when) > s.MaxAge || when == s.latest {
 			timeData[when] = value
 		}
 	}
