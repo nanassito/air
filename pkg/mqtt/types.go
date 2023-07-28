@@ -211,6 +211,25 @@ func (t *TemperatureSensor) GetTrend() Trend {
 	}
 }
 
+func (t *TemperatureSensor) GetRange() float64 {
+	current, err := t.Get()
+	if err != nil {
+		return 0
+	}
+
+	min := current
+	max := current
+	for _, measurement := range t.values.timeData {
+		if measurement > max {
+			max = measurement
+		}
+		if measurement < min {
+			min = measurement
+		}
+	}
+	return max - min
+}
+
 func NewJsonTemperatureSensor(mqtt paho.Client, topic string) *TemperatureSensor {
 	t := TemperatureSensor{
 		values: &valueWithHistory[float64]{MaxAge: 1 * time.Hour},

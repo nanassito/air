@@ -63,6 +63,13 @@ func TuneCold(hvac *models.Hvac) {
 		hvac.DecisionScore = 0
 		return
 	}
+	unitTempRange := hvac.AutoPilot.Sensors.Unit.GetRange()
+	if current < maxDesired && unitTempRange < 1 {
+		L.Info("Unit hasn't been effective for a while, shuting down", "hvac", hvac.Name, "unitTempRange", unitTempRange)
+		hvac.Mode.Set("OFF")
+		hvac.DecisionScore = 0
+		return
+	}
 
 	minOffset := 0.0
 	switch hvac.AutoPilot.Sensors.Air.GetTrend() {
