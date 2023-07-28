@@ -149,35 +149,19 @@ func NewControlledValue[T bool | string | float64](mqtt paho.Client, commandTopi
 	return &s
 }
 
-type sensorRecord struct {
-	when  time.Time
-	value float64
-}
-
 type TemperatureSensor struct {
-	values []sensorRecord
+	values *valueWithHistory[float64]
 }
 
 type SensorMqttPayload struct {
 	Temperature float64 `json:"temperature"`
 }
 
-func (t *TemperatureSensor) pruneOldData() {
-	for i, v := range t.values {
-		if v.when.Before(time.Now().Add(-1 * time.Hour)) { // Prune data older than 1h
-			continue
-		}
-		// t.values is ordered by timestamp so we know all remaining data should be kept.
-		t.values = t.values[i:]
-		break
-	}
-}
-
-func (t *TemperatureSensor) GetCurrent() (float64, error) {
-	if len(t.values) == 0 {
+func (t *TemperatureSensor) Get() (float64, error) {
+	if len(t.values.timeData) == 0 {
 		return 0, ErrNotInitializedYet
 	}
-	return t.values[len(t.values)-1].value, nil
+	return t.values.timeData[t.values.latest], nil
 }
 
 type Trend int64
@@ -189,19 +173,22 @@ const (
 )
 
 func (t *TemperatureSensor) GetTrend() Trend {
-	current, err := t.GetCurrent()
+	current, err := t.Get()
 	if err != nil {
 		return TrendStable
 	}
 
-	min := t.values[0].value
-	max := t.values[0].value
-	for _, measurement := range t.values[:len(t.values)] {
-		if measurement.value < min {
-			min = measurement.value
+	min := current
+	max := current
+	for ts, measurement := range t.values.timeData {
+		if ts == t.values.latest {
+			continue
 		}
-		if measurement.value > max {
-			max = measurement.value
+		if measurement < min {
+			min = measurement
+		}
+		if measurement > max {
+			max = measurement
 		}
 	}
 	min = min + 0.2
@@ -226,7 +213,7 @@ func (t *TemperatureSensor) GetTrend() Trend {
 
 func NewJsonTemperatureSensor(mqtt paho.Client, topic string) *TemperatureSensor {
 	t := TemperatureSensor{
-		values: make([]sensorRecord, 0),
+		values: &valueWithHistory[float64]{MaxAge: 1 * time.Hour},
 	}
 	mqtt.Subscribe(topic, qos, func(c paho.Client, m paho.Message) {
 		L.Info("Received", "topic", m.Topic(), "payload", m.Payload())
@@ -236,15 +223,14 @@ func NewJsonTemperatureSensor(mqtt paho.Client, topic string) *TemperatureSensor
 			L.Error("Failed to parse mqtt message", "err", err, "topic", m.Topic(), "payload", m.Payload())
 			return
 		}
-		t.values = append(t.values, sensorRecord{when: time.Now(), value: parsed.Temperature})
-		t.pruneOldData()
+		t.values.Insert(parsed.Temperature)
 	})
 	return &t
 }
 
 func NewRawTemperatureSensor(mqtt paho.Client, topic string) *TemperatureSensor {
 	t := TemperatureSensor{
-		values: make([]sensorRecord, 0),
+		values: &valueWithHistory[float64]{MaxAge: 1 * time.Hour},
 	}
 	mqtt.Subscribe(topic, qos, func(c paho.Client, m paho.Message) {
 		L.Info("Received", "topic", m.Topic(), "payload", m.Payload())
@@ -253,8 +239,7 @@ func NewRawTemperatureSensor(mqtt paho.Client, topic string) *TemperatureSensor 
 			L.Error("Failed to parse mqtt message", "err", err, "topic", m.Topic(), "payload", m.Payload())
 			return
 		}
-		t.values = append(t.values, sensorRecord{when: time.Now(), value: value})
-		t.pruneOldData()
+		t.values.Insert(value)
 	})
 	return &t
 }

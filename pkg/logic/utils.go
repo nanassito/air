@@ -10,7 +10,7 @@ import (
 var L = utils.Logger
 
 func getCurrentTemp(hvac *models.Hvac) (float64, error) {
-	current, err := hvac.AutoPilot.Sensors.Air.GetCurrent()
+	current, err := hvac.AutoPilot.Sensors.Air.Get()
 	if err != nil {
 		return 0, errors.New("don't have a current temperature from the sensor yet")
 	}
