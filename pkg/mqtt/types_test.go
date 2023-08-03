@@ -37,3 +37,21 @@ func Test3rdPartyValue(t *testing.T) {
 
 	is.True(v.UnchangedFor() < 1*time.Second)
 }
+
+func TestGetRange(t *testing.T) {
+	is := is.New(t)
+	mockMqtt := mocks.NewMockMqtt()
+
+	mockMqtt.Subscribe("command", 0, func(c paho.Client, m paho.Message) {
+		mockMqtt.Publish("status", 0, false, m.Payload())
+	})
+
+	s := mqtt.NewRawTemperatureSensor(mockMqtt, "topic")
+	mockMqtt.Publish("topic", 0, false, "24")
+	mockMqtt.Publish("topic", 0, false, "24") // A second time to check the dedup works.
+
+	is.Equal(0.0, s.GetRange()) // We have a single value so the range should be 0
+
+	mockMqtt.Publish("topic", 0, false, "24.5")
+	is.Equal(0.5, s.GetRange())
+}

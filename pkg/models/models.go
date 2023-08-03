@@ -70,6 +70,7 @@ type Hvac struct {
 }
 
 func (hvac *Hvac) Log() {
+	sensorTemp, _ := hvac.AutoPilot.Sensors.Air.Get()
 	L.Info("hvac state",
 		"hvac", hvac.Name,
 		"autopilot.enabled", hvac.AutoPilot.Enabled.Get(),
@@ -77,8 +78,11 @@ func (hvac *Hvac) Log() {
 		"autopilot.maxTemp", hvac.AutoPilot.MaxTemp.Get(),
 		"Mode", hvac.Mode.Get(),
 		"Fan", hvac.Fan.Get(),
-		"Temperature", hvac.Temperature.Get(),
-		"decisionScore", hvac.DecisionScore,
+		"TargetTemp", hvac.Temperature.Get(),
+		"UnitTempRange", hvac.AutoPilot.Sensors.Unit.GetRange(),
+		"SensorTempTrend", hvac.AutoPilot.Sensors.Air.GetTrend(),
+		"SensorTemp", sensorTemp,
+		"DecisionScore", hvac.DecisionScore,
 	)
 }
 
