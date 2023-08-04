@@ -24,16 +24,21 @@ func (s *valueWithHistory[T]) Insert(newValue T) {
 	if value, ok := s.timeData[s.latest]; ok && value == newValue {
 		return // Value is unchanged
 	}
-	timeData := make(map[time.Time]T, len(s.timeData))
-	for when, value := range s.timeData {
-		if time.Since(when) > s.MaxAge || when == s.latest {
-			timeData[when] = value
-		}
-	}
+	timeData := s.GetAllValues()
 	now := time.Now()
 	timeData[now] = newValue
 	s.latest = now
 	s.timeData = timeData
+}
+
+func (s *valueWithHistory[T]) GetAllValues() map[time.Time]T {
+	result := make(map[time.Time]T, len(s.timeData))
+	for when, value := range s.timeData {
+		if time.Since(when) <= s.MaxAge || when == s.latest {
+			result[when] = value
+		}
+	}
+	return result
 }
 
 type ThirdPartyValue[T bool | string | float64] struct {
@@ -46,7 +51,7 @@ type ThirdPartyValue[T bool | string | float64] struct {
 }
 
 func (s *ThirdPartyValue[T]) IsReady() bool {
-	return len(s.values.timeData) >= 1
+	return len(s.values.GetAllValues()) >= 1
 }
 
 func (s *ThirdPartyValue[T]) Get() T {
@@ -180,7 +185,7 @@ func (t *TemperatureSensor) GetTrend() Trend {
 
 	min := current
 	max := current
-	for ts, measurement := range t.values.timeData {
+	for ts, measurement := range t.values.GetAllValues() {
 		if ts == t.values.latest {
 			continue
 		}
@@ -219,7 +224,7 @@ func (t *TemperatureSensor) GetRange() float64 {
 
 	min := current
 	max := current
-	for _, measurement := range t.values.timeData {
+	for _, measurement := range t.values.GetAllValues() {
 		if measurement > max {
 			max = measurement
 		}
