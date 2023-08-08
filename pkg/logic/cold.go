@@ -64,7 +64,7 @@ func TuneCold(hvac *models.Hvac) {
 		return
 	}
 	unitTempRange := hvac.AutoPilot.Sensors.Unit.GetRange()
-	if hvac.Mode.UnchangedFor() > 30*time.Minute && current < maxDesired && unitTempRange < 1 {
+	if hvac.Mode.UnchangedFor() > 30*time.Minute && current < maxDesired && unitTempRange < 1 && hvac.AutoPilot.Sensors.Air.GetTrend() != mqtt.TrendWarmingUp {
 		L.Info("Unit hasn't been effective for a while, shuting down", "hvac", hvac.Name, "unitTempRange", unitTempRange)
 		hvac.Mode.Set("OFF")
 		hvac.DecisionScore = 0
