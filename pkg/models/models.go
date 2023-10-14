@@ -112,7 +112,15 @@ func (hvac *Hvac) Ping() {
 	hvac.AutoPilot.MaxTemp.Set(hvac.AutoPilot.MaxTemp.Get())
 }
 
-func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSensor *mqtt.TemperatureSensor) *Hvac {
+func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSensorTopic string) *Hvac {
+	mode_command := "esphome/" + name + "/mode_command"
+	mode_state := "esphome/" + name + "/mode_state"
+	fan_mode_command := "esphome/" + name + "/fan_mode_command"
+	fan_mode_state := "esphome/" + name + "/fan_mode_state"
+	maxTempCommand := "air3/" + name + "/autopilot/maxTemp/command"
+	maxTempState := "air3/" + name + "/autopilot/maxTemp/state"
+	minTempCommand := "air3/" + name + "/autopilot/minTemp/command"
+	minTempState := "air3/" + name + "/autopilot/minTemp/state"
 	hvac := Hvac{
 		Name: name,
 		AutoPilot: &autoPilot{
@@ -129,8 +137,8 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 			),
 			MinTemp: mqtt.NewControlledValue(
 				mqttClient,
-				"air3/"+name+"/autopilot/minTemp/command",
-				"air3/"+name+"/autopilot/minTemp/state",
+				minTempCommand,
+				minTempState,
 				func(payload []byte) (float64, error) {
 					return strconv.ParseFloat(string(payload), 64)
 				},
@@ -140,8 +148,8 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 			),
 			MaxTemp: mqtt.NewControlledValue(
 				mqttClient,
-				"air3/"+name+"/autopilot/maxTemp/command",
-				"air3/"+name+"/autopilot/maxTemp/state",
+				maxTempCommand,
+				maxTempState,
 				func(payload []byte) (float64, error) {
 					return strconv.ParseFloat(string(payload), 64)
 				},
@@ -150,7 +158,10 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 				},
 			),
 			Sensors: &sensors{
-				Air: temperatureSensor,
+				Air: mqtt.NewJsonTemperatureSensor(
+					mqttClient,
+					temperatureSensorTopic,
+				),
 				Unit: mqtt.NewRawTemperatureSensor(
 					mqttClient,
 					"esphome/"+name+"/current_temperature_state",
@@ -159,8 +170,8 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 		},
 		Mode: mqtt.NewThirdPartyValue(
 			mqttClient,
-			"esphome/"+name+"/mode_command",
-			"esphome/"+name+"/mode_state",
+			mode_command,
+			mode_state,
 			func(payload []byte) (string, error) {
 				mode, ok := modes[strings.ToUpper(string(payload))]
 				if ok {
@@ -175,8 +186,8 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 		),
 		Fan: mqtt.NewThirdPartyValue(
 			mqttClient,
-			"esphome/"+name+"/fan_mode_command",
-			"esphome/"+name+"/fan_mode_state",
+			fan_mode_command,
+			fan_mode_state,
 			func(payload []byte) (string, error) {
 				speed, ok := fanSpeeds[strings.ToUpper(string(payload))]
 				if ok {
@@ -202,5 +213,36 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 		),
 		DecisionScore: 0,
 	}
+	mqttClient.Publish(
+		"homeassistant/climate/air3/"+name+"/config",
+		0,
+		true,
+		`{
+			"name": "Thermostat",
+			"max_temp": 33,
+			"min_temp": 17,
+			"precision": 0.5,
+			"temp_step": 0.5,
+			"availability_topic": "air3/`+name+`/autopilot/status",
+			"temperature_high_command_topic": "`+maxTempCommand+`",
+			"temperature_high_state_topic": "`+maxTempState+`",
+			"temperature_low_command_topic": "`+minTempCommand+`",
+			"temperature_low_state_topic": "`+minTempState+`",
+			"current_temperature_topic": "`+temperatureSensorTopic+`",
+			"current_temperature_template": "{{ value_json.temperature }}",
+			"temperature_unit": "C",
+			"unique_id": "`+name+`_thermostat",
+			"mode_command_topic": "`+mode_command+`",
+			"mode_state_topic": "`+mode_state+`",
+			"fan_mode_command_topic": "`+fan_mode_command+`",
+			"fan_mode_state_topic": "`+fan_mode_state+`",
+			"device": {
+				"identifiers": "`+name+`",
+				"name": "`+name+`",
+				"model": "air3",
+				"manufacturer": "test"
+			}
+		}`,
+	)
 	return &hvac
 }

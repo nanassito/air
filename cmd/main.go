@@ -25,34 +25,22 @@ func main() {
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
 					"office",
-					mqtt.NewJsonTemperatureSensor(
-						mqttClient,
-						"zigbee2mqtt/server/device/office/followme",
-					),
+					"zigbee2mqtt/server/device/office/followme",
 				),
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
 					"kitchen",
-					mqtt.NewJsonTemperatureSensor(
-						mqttClient,
-						"zigbee2mqtt/server/device/kitchen/followme",
-					),
+					"zigbee2mqtt/server/device/kitchen/followme",
 				),
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
 					"parent",
-					mqtt.NewJsonTemperatureSensor(
-						mqttClient,
-						"zigbee2mqtt/server/device/parent/followme",
-					),
+					"zigbee2mqtt/server/device/parent/followme",
 				),
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
 					"zaya",
-					mqtt.NewJsonTemperatureSensor(
-						mqttClient,
-						"zigbee2mqtt/raspi/device/zaya/air",
-					),
+					"zigbee2mqtt/raspi/device/zaya/air",
 				),
 			},
 		},
@@ -61,10 +49,7 @@ func main() {
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
 					"living",
-					mqtt.NewJsonTemperatureSensor(
-						mqttClient,
-						"zigbee2mqtt/server/device/living/followme",
-					),
+					"zigbee2mqtt/server/device/living/followme",
 				),
 			},
 		},

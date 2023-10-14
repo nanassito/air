@@ -8,7 +8,6 @@ import (
 	"github.com/nanassito/air/pkg/logic"
 	"github.com/nanassito/air/pkg/mocks"
 	"github.com/nanassito/air/pkg/models"
-	"github.com/nanassito/air/pkg/mqtt"
 )
 
 func TestHeatTurnsOn(t *testing.T) {
@@ -23,10 +22,7 @@ func TestHeatTurnsOn(t *testing.T) {
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
 					roomName,
-					mqtt.NewJsonTemperatureSensor(
-						mqttClient,
-						roomTemp.Topic(),
-					),
+					roomTemp.Topic(),
 				),
 			},
 		},
@@ -54,10 +50,7 @@ func TestColdTurnsOn(t *testing.T) {
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
 					roomName,
-					mqtt.NewJsonTemperatureSensor(
-						mqttClient,
-						roomTemp.Topic(),
-					),
+					roomTemp.Topic(),
 				),
 			},
 		},
@@ -86,10 +79,7 @@ func TestDontFlipMode(t *testing.T) {
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
 					roomName,
-					mqtt.NewJsonTemperatureSensor(
-						mqttClient,
-						roomTemp.Topic(),
-					),
+					roomTemp.Topic(),
 				),
 			},
 		},
@@ -128,10 +118,7 @@ func TestStops(t *testing.T) {
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
 					roomName,
-					mqtt.NewJsonTemperatureSensor(
-						mqttClient,
-						roomTemp.Topic(),
-					),
+					roomTemp.Topic(),
 				),
 			},
 		},

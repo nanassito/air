@@ -12,7 +12,7 @@ import (
 func TestHomeAssistantInterface(t *testing.T) {
 	is := is.New(t)
 	mqttClient := mocks.NewMockMqtt()
-	hvac := models.NewHvacWithDefaultTopics(mqttClient, "room", nil)
+	hvac := models.NewHvacWithDefaultTopics(mqttClient, "room", "nil")
 
 	t.Run("autopilot", func(t *testing.T) {
 		t.Run("on", func(t *testing.T) {
