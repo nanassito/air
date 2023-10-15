@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -113,8 +114,8 @@ func (hvac *Hvac) Ping() {
 }
 
 func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSensorTopic string) *Hvac {
-	mode_command := "esphome/" + name + "/mode_command"
-	mode_state := "esphome/" + name + "/mode_state"
+	enabled_command := "air3/" + name + "/autopilot/mode/command"
+	enabled_state := "air3/" + name + "/autopilot/mode/state"
 	fan_mode_command := "esphome/" + name + "/fan_mode_command"
 	fan_mode_state := "esphome/" + name + "/fan_mode_state"
 	maxTempCommand := "air3/" + name + "/autopilot/maxTemp/command"
@@ -130,13 +131,24 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 		AutoPilot: &autoPilot{
 			Enabled: mqtt.NewControlledValue(
 				mqttClient,
-				"air3/"+name+"/autopilot/enabled/command",
-				"air3/"+name+"/autopilot/enabled/state",
+				enabled_command,
+				enabled_state,
 				func(payload []byte) (bool, error) {
-					return strconv.ParseBool(string(payload))
+					switch string(payload) {
+					case "manual":
+						return false, nil
+					case "automatic":
+						return true, nil
+					default:
+						return false, fmt.Errorf("invalid command: %v", payload)
+					}
 				},
 				func(value bool) string {
-					return strconv.FormatBool(value)
+					if value {
+						return "automatic"
+					} else {
+						return "manual"
+					}
 				},
 			),
 			MinTemp: mqtt.NewControlledValue(
@@ -185,8 +197,8 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 		},
 		Mode: mqtt.NewThirdPartyValue(
 			mqttClient,
-			mode_command,
-			mode_state,
+			"esphome/"+name+"/mode_command",
+			"esphome/"+name+"/mode_state",
 			func(payload []byte) (string, error) {
 				mode, ok := modes[strings.ToUpper(string(payload))]
 				if ok {
@@ -263,13 +275,15 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 			"current_temperature_template": "{{ value_json.temperature }}",
 			"temperature_unit": "C",
 			"unique_id": "`+name+`_thermostat",
-			"mode_command_topic": "`+mode_command+`",
-			"mode_state_topic": "`+mode_state+`",
+			"mode_command_topic": "`+enabled_command+`",
+			"mode_state_topic": "`+enabled_state+`",
+			"modes": ["manual", "automatic"],
 			"fan_mode_command_topic": "`+fan_mode_command+`",
 			"fan_mode_state_topic": "`+fan_mode_state+`",
 			"preset_modes": ["sleep", "eco"],
 			"preset_mode_command_topic": "`+presetCommandtopic+`",
 			"preset_mode_state_topic": "`+presetStatetopic+`",
+			"icon": "mdi:robot",
 			"device": {
 				"identifiers": "`+name+`",
 				"name": "`+name+`",
