@@ -22,37 +22,37 @@ func main() {
 	pumps := []*models.Pump{
 		{
 			Units: []*models.Hvac{
-				// models.NewHvacWithDefaultTopics(
-				// 	mqttClient,
-				// 	"office",
-				// 	"zigbee2mqtt/server/device/office/followme",
-				// ),
-				// models.NewHvacWithDefaultTopics(
-				// 	mqttClient,
-				// 	"kitchen",
-				// 	"zigbee2mqtt/server/device/kitchen/followme",
-				// ),
+				models.NewHvacWithDefaultTopics(
+					mqttClient,
+					"office",
+					"zigbee2mqtt/server/device/office/followme",
+				),
+				models.NewHvacWithDefaultTopics(
+					mqttClient,
+					"kitchen",
+					"zigbee2mqtt/server/device/kitchen/followme",
+				),
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
 					"parent",
 					"zigbee2mqtt/server/device/parent/followme",
 				),
-				// models.NewHvacWithDefaultTopics(
-				// 	mqttClient,
-				// 	"zaya",
-				// 	"zigbee2mqtt/raspi/device/zaya/air",
-				// ),
+				models.NewHvacWithDefaultTopics(
+					mqttClient,
+					"zaya",
+					"zigbee2mqtt/raspi/device/zaya/air",
+				),
 			},
 		},
-		// {
-		// 	Units: []*models.Hvac{
-		// 		models.NewHvacWithDefaultTopics(
-		// 			mqttClient,
-		// 			"living",
-		// 			"zigbee2mqtt/server/device/living/followme",
-		// 		),
-		// 	},
-		// },
+		{
+			Units: []*models.Hvac{
+				models.NewHvacWithDefaultTopics(
+					mqttClient,
+					"living",
+					"zigbee2mqtt/server/device/living/followme",
+				),
+			},
+		},
 	}
 	for range time.Tick(30 * time.Second) {
 		L.Info("Autopilot run.")
