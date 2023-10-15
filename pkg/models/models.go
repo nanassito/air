@@ -135,9 +135,9 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 				enabled_state,
 				func(payload []byte) (bool, error) {
 					switch string(payload) {
-					case "manual":
+					case "off":
 						return false, nil
-					case "automatic":
+					case "auto":
 						return true, nil
 					default:
 						return false, fmt.Errorf("invalid command: %v", payload)
@@ -145,9 +145,9 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 				},
 				func(value bool) string {
 					if value {
-						return "automatic"
+						return "auto"
 					} else {
-						return "manual"
+						return "off"
 					}
 				},
 			),
@@ -277,7 +277,7 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 			"unique_id": "`+name+`_thermostat",
 			"mode_command_topic": "`+enabled_command+`",
 			"mode_state_topic": "`+enabled_state+`",
-			"modes": ["manual", "automatic"],
+			"modes": ["off", "auto"],
 			"fan_mode_command_topic": "`+fan_mode_command+`",
 			"fan_mode_state_topic": "`+fan_mode_state+`",
 			"preset_modes": ["sleep", "eco"],
