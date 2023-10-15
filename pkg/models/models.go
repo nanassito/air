@@ -162,6 +162,8 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 							mqttClient.Publish(presetStatetopic, 0, false, "sleep")
 						case int64(ecoMaxTemp * 2):
 							mqttClient.Publish(presetStatetopic, 0, false, "eco")
+						default:
+							mqttClient.Publish(presetStatetopic, 0, false, "none")
 						}
 					}
 					return temp, err
