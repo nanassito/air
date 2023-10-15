@@ -121,6 +121,10 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 	maxTempState := "air3/" + name + "/autopilot/maxTemp/state"
 	minTempCommand := "air3/" + name + "/autopilot/minTemp/command"
 	minTempState := "air3/" + name + "/autopilot/minTemp/state"
+	presetCommandtopic := "air3/" + name + "/preset/command"
+	presetStatetopic := "air3/" + name + "/preset/state"
+	sleepMaxTemp := 22.0
+	ecoMaxTemp := 33.0
 	hvac := Hvac{
 		Name: name,
 		AutoPilot: &autoPilot{
@@ -151,7 +155,16 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 				maxTempCommand,
 				maxTempState,
 				func(payload []byte) (float64, error) {
-					return strconv.ParseFloat(string(payload), 64)
+					temp, err := strconv.ParseFloat(string(payload), 64)
+					if err == nil {
+						switch temp {
+						case sleepMaxTemp:
+							mqttClient.Publish(presetStatetopic, 0, false, "sleep")
+						case ecoMaxTemp:
+							mqttClient.Publish(presetStatetopic, 0, false, "eco")
+						}
+					}
+					return temp, err
 				},
 				func(value float64) string {
 					return strconv.FormatFloat(value, 'f', 1, 64)
@@ -213,6 +226,23 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 		),
 		DecisionScore: 0,
 	}
+
+	mqttClient.Subscribe(presetCommandtopic, 0, func(c paho.Client, m paho.Message) {
+		L.Info("Received", "topic", m.Topic(), "payload", m.Payload())
+		switch string(m.Payload()) {
+		case "sleep":
+			mqttClient.Publish(presetStatetopic, 0, false, "sleep")
+			hvac.AutoPilot.MaxTemp.Set(sleepMaxTemp)
+		case "eco":
+			mqttClient.Publish(presetStatetopic, 0, false, "eco")
+			hvac.AutoPilot.MaxTemp.Set(ecoMaxTemp)
+		default:
+			L.Warn("Invalid preset", "topic", m.Topic(), "payload", m.Payload())
+		}
+	})
+
+	// TODO:
+	// Use Mode for the autopilot-enabled, then use an icon to indicate which hvac this is about.
 	mqttClient.Publish(
 		"homeassistant/climate/air3/"+name+"/config",
 		0,
@@ -223,7 +253,6 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 			"min_temp": 17,
 			"precision": 0.5,
 			"temp_step": 0.5,
-			"availability_topic": "air3/`+name+`/autopilot/status",
 			"temperature_high_command_topic": "`+maxTempCommand+`",
 			"temperature_high_state_topic": "`+maxTempState+`",
 			"temperature_low_command_topic": "`+minTempCommand+`",
@@ -236,6 +265,9 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 			"mode_state_topic": "`+mode_state+`",
 			"fan_mode_command_topic": "`+fan_mode_command+`",
 			"fan_mode_state_topic": "`+fan_mode_state+`",
+			"preset_modes": ["sleep", "eco"],
+			"preset_mode_command_topic": "`+presetCommandtopic+`",
+			"preset_mode_state_topic": "`+presetStatetopic+`",
 			"device": {
 				"identifiers": "`+name+`",
 				"name": "`+name+`",
