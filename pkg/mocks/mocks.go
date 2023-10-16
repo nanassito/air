@@ -129,7 +129,11 @@ func NewMockTemperatureSensor(mockMqtt *MockMqtt, name string) *MockTemperatureS
 }
 
 func Autopilot(mqttClient *MockMqtt, room string, enabled bool) {
-	mqttClient.Publish("air3/"+room+"/autopilot/enabled/command", 0, true, strconv.FormatBool(enabled))
+	mode := "off"
+	if enabled {
+		mode = "auto"
+	}
+	mqttClient.Publish("air3/"+room+"/autopilot/mode/command", 0, true, mode)
 }
 
 func DesiredMinTemp(mqttClient *MockMqtt, room string, temp float64) {
