@@ -37,7 +37,7 @@ func StartCold(hvac *models.Hvac) {
 			return
 		}
 		hvac.Mode.Set("COOL")
-		hvac.Temperature.Set(math.Max(inUnit, hvac.AutoPilot.MaxTemp.Get()+3))
+		hvac.Temperature.Set(math.Max(inUnit, hvac.AutoPilot.MaxTemp.Get()))
 		hvac.Fan.Set("AUTO")
 		return
 	}
