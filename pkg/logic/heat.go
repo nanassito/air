@@ -89,6 +89,12 @@ func TuneHeat(hvac *models.Hvac) {
 
 	switch hvac.DecisionScore {
 	case -100:
+		if hvac.Temperature.Get() == 17.0 {
+			L.Info("Heating is ineffective, shutting down", "hvac", hvac.Name)
+			hvac.Mode.Set("OFF")
+			hvac.DecisionScore = 0
+			return
+		}
 		L.Info("Reducing fan speed and temperature", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
 		hvac.DecreaseFanSpeed()

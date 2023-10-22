@@ -63,15 +63,13 @@ func TuneCold(hvac *models.Hvac) {
 		hvac.DecisionScore = 0
 		return
 	}
-	// This creates on/off oscillations with a ~1h30 period
-	// unitTempRange := hvac.AutoPilot.Sensors.Unit.GetRange()
-	// // Duration needs to be the same than the window used for the trend calculation.
-	// if hvac.Mode.UnchangedFor() > 1*time.Hour && current < maxDesired && unitTempRange < 1 && hvac.AutoPilot.Sensors.Air.GetTrend() != mqtt.TrendWarmingUp {
-	// 	L.Info("Unit hasn't been effective for a while, shutting down", "hvac", hvac.Name, "unitTempRange", unitTempRange)
-	// 	hvac.Mode.Set("OFF")
-	// 	hvac.DecisionScore = 0
-	// 	return
-	// }
+	unitTempRange := hvac.AutoPilot.Sensors.Unit.GetRange()
+	if hvac.Mode.UnchangedFor() > 3*time.Hour && current < maxDesired && unitTempRange < 1 && hvac.AutoPilot.Sensors.Air.GetTrend() != mqtt.TrendWarmingUp {
+		L.Info("Unit hasn't been effective for a while, shutting down", "hvac", hvac.Name, "unitTempRange", unitTempRange)
+		hvac.Mode.Set("OFF")
+		hvac.DecisionScore = 0
+		return
+	}
 
 	minOffset := 0.0
 	switch hvac.AutoPilot.Sensors.Air.GetTrend() {
