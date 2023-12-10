@@ -49,7 +49,7 @@ func TuneHeat(hvac *models.Hvac) {
 	}
 
 	minDesired := hvac.AutoPilot.MinTemp.Get()
-	L.Info("Tuning heat", "current", current, "minDesired", hvac.AutoPilot.MaxTemp.Get())
+	L.Info("Tuning heat", "current", current, "minDesired", hvac.AutoPilot.MaxTemp.Get(), "hvac", hvac.Name)
 
 	if current > minDesired+3 {
 		L.Info("It's way too hot, shutting down", "hvac", hvac.Name)
@@ -102,9 +102,11 @@ func TuneHeat(hvac *models.Hvac) {
 	case -50:
 		L.Info("Reducing temperature", "hvac", hvac.Name)
 		hvac.Temperature.Set(hvac.Temperature.Get() - 0.5)
+		hvac.DecisionScore = -51 // Prevent being stuck , changing the temperature every cycle.
 	case 50:
 		L.Info("Increasing temperature", "hvac", hvac.Name)
 		hvac.Temperature.Set(hvac.Temperature.Get() + 0.5)
+		hvac.DecisionScore = 51 // Prevent being stuck , changing the temperature every cycle.
 	case 100:
 		L.Info("Increasing fan speed and temperature", "hvac", hvac.Name)
 		hvac.DecisionScore = 0

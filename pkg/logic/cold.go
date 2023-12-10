@@ -55,7 +55,7 @@ func TuneCold(hvac *models.Hvac) {
 	}
 
 	maxDesired := hvac.AutoPilot.MaxTemp.Get()
-	L.Info("Tuning cold", "current", current, "maxDesired", hvac.AutoPilot.MaxTemp.Get())
+	L.Info("Tuning cold", "current", current, "maxDesired", hvac.AutoPilot.MaxTemp.Get(), "hvac", hvac.Name)
 
 	if current < maxDesired-3 {
 		L.Info("It's way too cold, shutting down", "hvac", hvac.Name)
