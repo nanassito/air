@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/nanassito/air/pkg/models"
@@ -97,20 +98,18 @@ func TuneHeat(hvac *models.Hvac) {
 		}
 		L.Info("Reducing fan speed and temperature", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
-		hvac.DecreaseFanSpeed()
+		if rand.Int()%2 == 0 {
+			// Temporary solution this should porbably be based on temperature gradients instead.
+			hvac.DecreaseFanSpeed()
+		}
 		hvac.Temperature.Set(hvac.Temperature.Get() - 0.5)
-	case -50:
-		L.Info("Reducing temperature", "hvac", hvac.Name)
-		hvac.Temperature.Set(hvac.Temperature.Get() - 0.5)
-		hvac.DecisionScore = -51 // Prevent being stuck , changing the temperature every cycle.
-	case 50:
-		L.Info("Increasing temperature", "hvac", hvac.Name)
-		hvac.Temperature.Set(hvac.Temperature.Get() + 0.5)
-		hvac.DecisionScore = 51 // Prevent being stuck , changing the temperature every cycle.
 	case 100:
 		L.Info("Increasing fan speed and temperature", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
-		hvac.IncreaseFanSpeed()
+		if rand.Int()%2 == 0 {
+			// Temporary solution this should porbably be based on temperature gradients instead.
+			hvac.IncreaseFanSpeed()
+		}
 		hvac.Temperature.Set(hvac.Temperature.Get() + 0.5)
 	}
 	L.Info("Completing TuneHeat", "hvac", hvac.Name, "decisionScore", hvac.DecisionScore)
