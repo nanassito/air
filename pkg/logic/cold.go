@@ -37,7 +37,14 @@ func StartCold(hvac *models.Hvac) {
 			return
 		}
 		hvac.Mode.Set("COOL")
-		hvac.Temperature.Set(math.Max(inUnit, hvac.AutoPilot.MaxTemp.Get()))
+		// The HVAC unit has a flawed perception of the temperature in the room and so it can't set it's own temperature correctly
+		// There are 2 possibilities here:
+		// A. We haven't run the Cooling for a long time, in which case there is a large temperature gradient in the room.
+		//    In this case we want to start with targetting the temperature seen by the unit. We'll gradually lower it as the
+		//    air is steered up and the gradient lowered.
+		// B. We have recently run up the hvac and the temperature gradient isn't too big. In this case we want to start with
+		//    the target maximal temperature. However we take a 2C buffer because the hvac will still cool too much initially.
+		hvac.Temperature.Set(math.Max(inUnit, hvac.AutoPilot.MaxTemp.Get()+2))
 		hvac.Fan.Set("AUTO")
 		return
 	}
