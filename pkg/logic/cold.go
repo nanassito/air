@@ -25,10 +25,6 @@ func StartCold(hvac *models.Hvac) {
 	}
 
 	if current >= hvac.AutoPilot.MaxTemp.Get()-1 {
-		if hvac.Mode.UnchangedFor() < 30*time.Minute {
-			L.Info("Hvac was shutdown not long enough ago.", "hvac", hvac.Name)
-			return
-		}
 		L.Info("Temperature rised enough that we should restart the cooling cycle.", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
 		inUnit, err := hvac.AutoPilot.Sensors.Unit.Get()
@@ -37,16 +33,30 @@ func StartCold(hvac *models.Hvac) {
 			return
 		}
 		hvac.Mode.Set("COOL")
-		// The HVAC unit has a flawed perception of the temperature in the room and so it can't set it's own temperature correctly
-		// There are 2 possibilities here:
-		// A. We haven't run the Cooling for a long time, in which case there is a large temperature gradient in the room.
-		//    In this case we want to start with targetting the temperature seen by the unit. We'll gradually lower it as the
-		//    air is steered up and the gradient lowered.
-		// B. We have recently run up the hvac and the temperature gradient isn't too big. In this case we want to start with
-		//    the target maximal temperature. However we take a 2C buffer because the hvac will still cool too much initially.
-		hvac.Temperature.Set(math.Max(inUnit, hvac.AutoPilot.MaxTemp.Get()+2))
-		hvac.Fan.Set("AUTO")
-		return
+
+		if inUnit > hvac.AutoPilot.MaxTemp.Get()+2 {
+			// If there is a large temperature difference between the in-unit sensor and the target temperature,
+			// we want to first mix the air.
+			hvac.Temperature.Set(30)
+			hvac.Fan.Set("HIGH")
+			go func() {
+				// After some time we can tweak the settings to maximize comfort.
+				time.Sleep(5 * time.Minute)
+				hvac.Fan.Set("AUTO")
+				inUnit, err := hvac.AutoPilot.Sensors.Unit.Get()
+				if err != nil {
+					L.Info("unknown current temperature in the unit", "hvac", hvac.Name)
+					return
+				}
+				hvac.Temperature.Set(math.Max(inUnit, hvac.AutoPilot.MaxTemp.Get()+2))
+			}()
+		} else {
+			// The HVAC unit has a flawed perception of the temperature in the room and so it can't set it's own
+			// temperature correctly. We make up for it by targetting teh higher of the in-unit temperature and
+			// the desired temperature (plus a buffer) to minimize the risk of over-cooling.
+			hvac.Temperature.Set(math.Max(inUnit, hvac.AutoPilot.MaxTemp.Get()+2))
+			hvac.Fan.Set("AUTO")
+		}
 	}
 }
 
