@@ -124,7 +124,7 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 	minTempState := "air3/" + name + "/autopilot/minTemp/state"
 	presetCommandtopic := "air3/" + name + "/preset/command"
 	presetStatetopic := "air3/" + name + "/preset/state"
-	sleepMaxTemp := 22.0
+	sleepMaxTemp := 23.0
 	ecoMaxTemp := 33.0
 	hvac := Hvac{
 		Name: name,
