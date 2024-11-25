@@ -40,7 +40,7 @@ func main() {
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
 					"zaya",
-					"zigbee2mqtt/raspi/device/zaya/air",
+					"zigbee2mqtt/server/device/livingroom/air",
 				),
 			},
 		},
