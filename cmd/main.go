@@ -40,7 +40,7 @@ func main() {
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
 					"zaya",
-					"zigbee2mqtt/server/device/livingroom/air",
+					"zigbee2mqtt/server/sonoff2 in Zaya's bedroom",
 				),
 			},
 		},
