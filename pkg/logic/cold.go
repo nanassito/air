@@ -60,7 +60,7 @@ func StartCold(hvac *models.Hvac) {
 	}
 }
 
-func TuneCold(hvac *models.Hvac) {
+func TuneCold(hvac *models.Hvac, pump *models.Pump) {
 	current, err := getCurrentTemp(hvac)
 	if err != nil {
 		L.Error(err.Error(), "hvac", hvac.Name)

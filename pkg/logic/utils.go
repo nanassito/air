@@ -29,7 +29,7 @@ func TunePump(pump *models.Pump) {
 					StartHeat(hvac)
 				}
 				if hvac.Mode.Get() == "HEAT" {
-					TuneHeat(hvac)
+					TuneHeat(hvac, pump)
 				}
 			}
 			if usableModes.Has("COOL") {
@@ -37,7 +37,7 @@ func TunePump(pump *models.Pump) {
 					StartCold(hvac)
 				}
 				if hvac.Mode.Get() == "COOL" {
-					TuneCold(hvac)
+					TuneCold(hvac, pump)
 				}
 			}
 		} else {

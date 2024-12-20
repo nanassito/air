@@ -90,7 +90,7 @@ func (hvac *Hvac) Log() {
 func (hvac *Hvac) DecreaseFanSpeed() {
 	switch hvac.Fan.Get() {
 	case "MEDIUM":
-		hvac.Fan.Set("LOW")
+		hvac.Fan.Set("AUTO")
 	case "HIGH":
 		hvac.Fan.Set("MEDIUM")
 	}

@@ -37,7 +37,7 @@ func StartHeat(hvac *models.Hvac) {
 	}
 }
 
-func TuneHeat(hvac *models.Hvac) {
+func TuneHeat(hvac *models.Hvac, pump *models.Pump) {
 	current, err := getCurrentTemp(hvac)
 	if err != nil {
 		L.Error(err.Error(), "hvac", hvac.Name)
@@ -95,13 +95,34 @@ func TuneHeat(hvac *models.Hvac) {
 			hvac.DecisionScore = 0
 			return
 		}
-		L.Info("Reducing fan speed and temperature", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
-		hvac.Temperature.Set(hvac.Temperature.Get() - 0.5)
+		if hvac.Temperature.Get() <= getAvgTargetTemp(pump) && hvac.Fan.Get() != "AUTO" && hvac.Fan.Get() != "LOW" {
+			L.Info("Reducing fan speed", "hvac", hvac.Name)
+			hvac.DecreaseFanSpeed()
+		} else {
+			L.Info("Reducing fan temperature", "hvac", hvac.Name)
+			hvac.Temperature.Set(hvac.Temperature.Get() - 0.5)
+
+		}
 	case 100:
-		L.Info("Increasing fan speed and temperature", "hvac", hvac.Name)
 		hvac.DecisionScore = 0
-		hvac.Temperature.Set(hvac.Temperature.Get() + 0.5)
+		if hvac.Temperature.Get()-getAvgTargetTemp(pump) > 3 && hvac.Fan.Get() != "HIGH" {
+			// There is too much imbalance between this hvac and the others, we need to mix the air more.
+			L.Info("Too much imbalance, increasing fan speed", "hvac", hvac.Name)
+			hvac.IncreaseFanSpeed()
+			hvac.Temperature.Set(hvac.Temperature.Get() - 0.5)
+		} else {
+			L.Info("Increasing temperature", "hvac", hvac.Name)
+			hvac.Temperature.Set(hvac.Temperature.Get() + 0.5)
+		}
 	}
 	L.Info("Completing TuneHeat", "hvac", hvac.Name, "decisionScore", hvac.DecisionScore)
+}
+
+func getAvgTargetTemp(pump *models.Pump) float64 {
+	var total float64
+	for _, hvac := range pump.Units {
+		total += hvac.Temperature.Get()
+	}
+	return total / float64(len(pump.Units))
 }
