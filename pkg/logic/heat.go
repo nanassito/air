@@ -23,7 +23,7 @@ func StartHeat(hvac *models.Hvac) {
 		return
 	}
 
-	if current <= hvac.AutoPilot.MinTemp.Get()+1 {
+	if current <= hvac.AutoPilot.MinTemp.Get() {
 		if hvac.Mode.UnchangedFor() < 30*time.Minute {
 			L.Info("Hvac was shutdown not long enough ago.", "hvac", hvac.Name)
 			return
@@ -32,7 +32,13 @@ func StartHeat(hvac *models.Hvac) {
 		hvac.DecisionScore = 0
 		hvac.Mode.Set("HEAT")
 		hvac.Fan.Set("AUTO")
-		hvac.Temperature.Set(hvac.AutoPilot.MinTemp.Get())
+		if current <= hvac.AutoPilot.MinTemp.Get()+1 {
+			// We still have some marging so let's restart with a low target temperature
+			hvac.Temperature.Set(17)
+		} else {
+			// We've lost a lot of heat already so let's restart hard.
+			hvac.Temperature.Set(hvac.AutoPilot.MinTemp.Get())
+		}
 		return
 	}
 }
