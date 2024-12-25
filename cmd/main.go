@@ -25,7 +25,7 @@ func main() {
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
 					"office",
-					"zigbee2mqtt/server/device/office/followme",
+					"zigbee2mqtt/server/device/office/air",
 				),
 				models.NewHvacWithDefaultTopics(
 					mqttClient,
