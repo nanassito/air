@@ -4,6 +4,7 @@ WORKDIR /usr/src/app
 
 ENV GOOS=linux
 ENV GOARCH=amd64 
+ENV CGO_ENABLED=0 
 
 # pre-copy/cache go.mod for pre-downloading dependencies and only redownloading them in subsequent builds if they change
 COPY go.mod go.sum ./
