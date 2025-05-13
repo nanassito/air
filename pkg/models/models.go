@@ -168,6 +168,10 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 				maxTempState,
 				func(payload []byte) (float64, error) {
 					temp, err := strconv.ParseFloat(string(payload), 64)
+					if temp <= 22 {
+						L.Warn("Invalid max temp", "temp", temp, "topic", maxTempCommand)
+						return 22, fmt.Errorf("invalid max temp: %v", temp)
+					}
 					if err == nil {
 						switch int64(temp * 2) { // *2 to get rid of the floating point for .5°C
 						case int64(sleepMaxTemp * 2):
