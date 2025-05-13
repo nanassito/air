@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	server = flag.String("mqtt", "tcp://mqtt.epa.jaminais.fr:1883", "Address of the mqtt server.")
+	server = flag.String("mqtt", "tcp://mqtt.epa.jaminais.fr:31883", "Address of the mqtt server.")
 	L      = utils.Logger
 )
 
