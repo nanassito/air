@@ -296,5 +296,10 @@ func NewHvacWithDefaultTopics(mqttClient paho.Client, name string, temperatureSe
 			}
 		}`,
 	)
+	// If k8s shits the bed, everything will restart without a state.
+	// This will help start in a sensible configuration.
+	mqttClient.Publish(minTempCommand, 0, false, "19.0")
+	mqttClient.Publish(maxTempCommand, 0, false, "33.0")
+	mqttClient.Publish(enabled_command, 0, false, "auto")
 	return &hvac
 }
